@@ -1,10 +1,13 @@
 from collections import namedtuple
 
-PartsOfSubmissionFileName = namedtuple('PartsOfSubmissionFileName', 'submission_id first_name last_name date_time file_name')
+
+PartsOfSubmissionFileName = namedtuple(
+    'PartsOfSubmissionFileName',
+    'submission_id first_name last_name date_time file_name'
+    )
 
 
-
-def parse_submission_file_name(name):
+def parse_submission_file_name(name: str) -> PartsOfSubmissionFileName:
     parts = name.split(' - ', maxsplit=3)
     first, last = parts[1].split(' ')
     return PartsOfSubmissionFileName(
