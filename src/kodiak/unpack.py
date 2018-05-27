@@ -1,9 +1,6 @@
-import os
 import shutil
-import time
-from datetime import datetime
 from pathlib import Path
-from collections import namedtuple
+from kodiak.submission import SubmissionFile
 
 
 class UnpackCommand:
@@ -52,10 +49,8 @@ class UnpackCommand:
         return next(self.pathTo['archive'].iterdir())
 
     def fixMtimesOnSubmissionFiles(self):
-        for file in self.getStudentSubmissionFiles():
-            parts = parse_submission_file_name(file.name)
-            s = parts.date_time_seconds
-            os.utime(str(file), (s, s))
+        for submissionFile in self.getStudentSubmissionFiles():
+            submissionFile.fixMtime()
 
     def createStudentDirectories(self):
         for name in self.getStudentNames():
@@ -63,72 +58,35 @@ class UnpackCommand:
             mkdir(studentDirectory)
 
     def getStudentNames(self):
-        return set([self.getStudentNameFromSubmissionFile(f) for f in self.getStudentSubmissionFiles()])
+        files = self.getStudentSubmissionFiles()
+        names = [self.getStudentNameFromSubmissionFile(f) for f in files]
+        return set(names)
 
-    def getStudentNameFromSubmissionFile(self, submissionFile: Path):
-        n = parse_submission_file_name(submissionFile.name)
-        return f'{n.last_name}_{n.first_name}'
+    def getStudentNameFromSubmissionFile(self, f: SubmissionFile):
+        return f'{f.student_last_name}_{f.student_first_name}'
 
     def getStudentSubmissionFiles(self):
         for f in self.pathTo['extracted archive'].iterdir():
-            if f.name not in 'index.html . ..'.split():
-                yield f
+            if f.name not in ['index.html', '.', '..']:
+                yield SubmissionFile(f)
 
     def importStudentSubmissions(self):
         for file in self.getSubmissionsOrderedOldestToYoungest():
             name = self.getStudentNameFromSubmissionFile(file)
             student = self.pathTo['project'] / name
-            unpackedFile = student / self.getFileNameFromSubmissionFile(file)
+            unpackedFile = student / file.submitted_filename
             if self.isArchive(file):
-                unpack_archive(file, unpackedFile.with_name(unpackedFile.stem), self.collisionHandler)
+                target = unpackedFile.with_name(unpackedFile.stem)
+                unpack_archive(file.path, target, self.collisionHandler)
             else:
-                copy(file, unpackedFile, self.collisionHandler)
+                copy(file.path, unpackedFile, self.collisionHandler)
 
     def getSubmissionsOrderedOldestToYoungest(self):
         submissions = list(self.getStudentSubmissionFiles())
-        submissions_parsed = [parse_submission_file_name(str(s)) for s in submissions]
-        times = [s.date_time for s in submissions_parsed]
-        time_submissions = list(zip(times, submissions))
-        time_submissions.sort()     # oldest to youngest
-        return [file for time, file in time_submissions]
-
-    def getFileNameFromSubmissionFile(self, submissionFile: Path):
-        n = parse_submission_file_name(submissionFile.name)
-        return n.file_name
+        return sorted(submissions, key=lambda s: s.datetime)
 
     def isArchive(self, file):
         return file.suffix in get_supported_archive_extensions()
-
-
-PartsOfSubmissionFileName = namedtuple(
-    'PartsOfSubmissionFileName',
-    'submission_id first_name last_name date_time date_time_seconds file_name'
-)
-
-
-def parse_submission_file_name(name: str) -> PartsOfSubmissionFileName:
-    parts = name.split(' - ', maxsplit=3)
-    first, last = parts[1].split(' ')
-
-    # Kodiak runs together hours and minutes. Split them up so that
-    # we can use strptime to parse and create a datetime object.
-    date_time_str = parts[2]
-    minutes = date_time_str[-5:-3]
-    hours = date_time_str[-7:-5]
-    hours_minutes = hours + ' ' + minutes
-    date_time_str = date_time_str[:-7] + hours_minutes + date_time_str[-3:]
-    date_time = datetime.strptime(date_time_str, '%b %d, %Y %I %M %p')
-
-    date_time_seconds = (date_time - datetime(1970, 1, 1)).total_seconds() + time.timezone
-
-    return PartsOfSubmissionFileName(
-        submission_id=parts[0],
-        first_name=first,
-        last_name=last,
-        date_time=date_time,
-        date_time_seconds=date_time_seconds,
-        file_name=parts[3]
-    )
 
 
 def get_supported_archive_extensions():
