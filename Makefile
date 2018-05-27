@@ -19,4 +19,3 @@ clean:
 
 test: build
 	PYTHONPATH=./src MYPYPATH=./src pytest $(PYTEST_OPTS) tests
-	build/kodiak-$(VERSION).pyz unpack ~/Downloads/Homework\ 3\ Download\ May\ 25,\ 2018\ 1118\ AM.zip build/kodiak-$(VERSION)-test-result
