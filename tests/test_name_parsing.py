@@ -1,12 +1,12 @@
-import kodiak
+from kodiak import kodiak
 
 
-NAME = "13394-80551 - Eric Gillotti - Mar 29, 2018 1205 PM - EGillotti - Homework 6.zip"  # noqa: E501
+NAME = "13394-80551 - Charlie Brown - Mar 29, 2018 1205 PM - CBrown - Homework 6.zip"  # noqa: E501
 
 
 def test_file_name_with_separator_in_file_name():
     parts = kodiak.parse_submission_file_name(NAME)
-    assert parts.file_name == "EGillotti - Homework 6.zip"
+    assert parts.file_name == "CBrown - Homework 6.zip"
 
 
 def test_submission_id():
@@ -16,14 +16,15 @@ def test_submission_id():
 
 def test_first_name():
     parts = kodiak.parse_submission_file_name(NAME)
-    assert parts.first_name == "Eric"
+    assert parts.first_name == "Charlie"
 
 
 def test_last_name():
     parts = kodiak.parse_submission_file_name(NAME)
-    assert parts.last_name == "Gillotti"
+    assert parts.last_name == "Brown"
 
 
 def test_submission_date_time():
+    from datetime import datetime
     parts = kodiak.parse_submission_file_name(NAME)
-    assert parts.date_time == "Mar 29, 2018 1205 PM"
+    assert parts.date_time == datetime.strptime("Mar 29, 2018 1205 PM", '%b %d, %Y %I%M %p')
