@@ -1,11 +1,11 @@
-from pathlib import Path
+import pathlib
 from datetime import datetime
 import time
 import os
 
 
 class SubmissionFile:
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: pathlib.Path) -> None:
         self.path = path
         self.suffix = path.suffix
         self.parseIntoAttributes(path.name)

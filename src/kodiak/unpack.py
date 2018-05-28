@@ -1,10 +1,10 @@
 import shutil
-from pathlib import Path
+import pathlib
 from kodiak.submission import SubmissionFile
 
 
 class UnpackCommand:
-    def __init__(self, archiveFile: Path, projectDirectory: Path, keep_all: bool) -> None:
+    def __init__(self, archiveFile: pathlib.Path, projectDirectory: pathlib.Path, keep_all: bool) -> None:
         self.archiveFile = archiveFile.resolve()
         self.projectDirectory = projectDirectory.resolve()
         self.setCollisionHandler(keep_all)
