@@ -4,17 +4,23 @@ from kodiak.submission import SubmissionFile
 
 
 class UnpackCommand:
-    def __init__(self, archiveFile: pathlib.Path, projectDirectory: pathlib.Path, keep_all: bool) -> None:
+    def __init__(self, archiveFile: pathlib.Path, projectDirectory: pathlib.Path, duplicates: str) -> None:
         self.archiveFile = archiveFile.resolve()
         self.projectDirectory = projectDirectory.resolve()
-        self.setCollisionHandler(keep_all)
-        self.definePaths()
 
-    def setCollisionHandler(self, keep_all):
-        if keep_all:
-            self.collisionHandler = append_number_collision_handler
-        else:
+        self.process_submissions_youngest_to_oldest = False
+        if duplicates == 'newest-only':
             self.collisionHandler = replace_collision_handler
+        elif duplicates == 'oldest-only':
+            self.collisionHandler = skip_collision_handler
+        elif duplicates == 'number-older':
+            self.collisionHandler = append_number_collision_handler
+            self.process_submissions_youngest_to_oldest = True
+        elif duplicates == 'number-newer':
+            self.collisionHandler = append_number_collision_handler
+            self.process_submissions_youngest_to_oldest = False
+
+        self.definePaths()
 
     def definePaths(self):
         self.pathTo = {
@@ -71,7 +77,13 @@ class UnpackCommand:
                 yield SubmissionFile(f)
 
     def importStudentSubmissions(self):
-        for file in self.getSubmissionsOrderedOldestToYoungest():
+        if self.process_submissions_youngest_to_oldest:
+            submissions = self.getSubmissionsYoungestToOldest()
+        else:
+            submissions = self.getSubmissionsOldestToYoungest()
+
+        for file in submissions:
+            print("Processing", file.path.name)
             name = self.getStudentNameFromSubmissionFile(file)
             student = self.pathTo['project'] / name
             unpackedFile = student / file.submitted_filename
@@ -81,9 +93,13 @@ class UnpackCommand:
             else:
                 copy(file.path, unpackedFile, self.collisionHandler)
 
-    def getSubmissionsOrderedOldestToYoungest(self):
+    def getSubmissionsOldestToYoungest(self):
         submissions = list(self.getStudentSubmissionFiles())
-        return sorted(submissions, key=lambda s: s.datetime)
+        submissions = sorted(submissions, key=lambda s: s.datetime)
+        return submissions
+
+    def getSubmissionsYoungestToOldest(self):
+        return reversed(self.getSubmissionsOldestToYoungest())
 
     def isArchive(self, file):
         return file.suffix in get_supported_archive_extensions()
@@ -101,6 +117,14 @@ def replace_collision_handler(operation, source, destination):
     return destination
 
 
+def skip_collision_handler(operation, source, destination):
+    raise SkipCollisionException()
+
+
+class SkipCollisionException(Exception):
+    pass
+
+
 def raise_exception_collision_handler(operation, source, destination):
     raise Exception(f'COLISION: cannot {operation} <{source}> because <{destination}> exists.')
 
@@ -110,17 +134,23 @@ def append_number_collision_handler(operation, source, destination):
 
 
 def unpack_archive(s, d, collision_handler=raise_exception_collision_handler):
-    if d.exists() and d.is_file():
-        d = collision_handler('unpach_archive', s, d)
-    shutil.unpack_archive(str(s), str(d))
+    try:
+        if d.exists() and d.is_file():
+            d = collision_handler('unpach_archive', s, d)
+        shutil.unpack_archive(str(s), str(d))
+    except SkipCollisionException:
+        pass
 
 
 def copy(s, d, collision_callback=raise_exception_collision_handler):
-    if d.exists() and d.is_dir():
-        d = d / s.name
-    if d.exists() and d.is_file():
-        d = collision_callback('copy', s, d)
-    shutil.copy2(str(s), str(d))
+    try:
+        if d.exists() and d.is_dir():
+            d = d / s.name
+        if d.exists() and d.is_file():
+            d = collision_callback('copy', s, d)
+        shutil.copy2(str(s), str(d))
+    except SkipCollisionException:
+        pass
 
 
 def append_number_to_make_unique(file):
