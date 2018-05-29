@@ -57,13 +57,13 @@ kodiak --help
 
 ## Running the tests
 
-Explain how to run the automated tests for this system
-
-Build and run the unit tests in tests/ using make as follows.
+Build and run the unit and functional tests using make as follows.
 
 ```
 make clean ; make test
 ```
+
+To run tests manually check out the test rule in the Makefile.
 
 ### Static type checking
 
