@@ -7,19 +7,7 @@ class UnpackCommand:
     def __init__(self, archiveFile: pathlib.Path, projectDirectory: pathlib.Path, duplicates: str) -> None:
         self.archiveFile = archiveFile.resolve()
         self.projectDirectory = projectDirectory.resolve()
-
-        self.process_submissions_youngest_to_oldest = False
-        if duplicates == 'newest-only':
-            self.collisionHandler = replace_collision_handler
-        elif duplicates == 'oldest-only':
-            self.collisionHandler = skip_collision_handler
-        elif duplicates == 'number-older':
-            self.collisionHandler = append_number_collision_handler
-            self.process_submissions_youngest_to_oldest = True
-        elif duplicates == 'number-newer':
-            self.collisionHandler = append_number_collision_handler
-            self.process_submissions_youngest_to_oldest = False
-
+        self.duplicates_option = duplicates
         self.definePaths()
 
     def definePaths(self):
@@ -49,7 +37,7 @@ class UnpackCommand:
     def extractArchive(self):
         archive = self.getArchive()
         target = self.pathTo['extracted archive']
-        unpack_archive(archive, target)
+        shutil.unpack_archive(str(archive), str(target))
 
     def getArchive(self):
         return next(self.pathTo['archive'].iterdir())
@@ -77,21 +65,41 @@ class UnpackCommand:
                 yield SubmissionFile(f)
 
     def importStudentSubmissions(self):
-        if self.process_submissions_youngest_to_oldest:
-            submissions = self.getSubmissionsYoungestToOldest()
-        else:
-            submissions = self.getSubmissionsOldestToYoungest()
+        project_path = self.pathTo['project']
+        if self.duplicates_option == 'newest-only':
+            self.importNewestStudentSubmissions(project_path)
+        elif self.duplicates_option == 'oldest-only':
+            self.importOldestStudentSubmissions(project_path)
+        elif self.duplicates_option == 'number-older':
+            self.importStudentSubmissionsNumberingOlder(project_path)
+        elif self.duplicates_option == 'number-newer':
+            self.importStudentSubmissionsNumberingNewer(project_path)
 
+    def importOldestStudentSubmissions(self, target_path):
+        self.importSubmissionsSkippingDuplicates(self.getSubmissionsOldestToYoungest(), target_path)
+
+    def importNewestStudentSubmissions(self, target_path):
+        self.importSubmissionsSkippingDuplicates(self.getSubmissionsYoungestToOldest(), target_path)
+
+    def importSubmissionsSkippingDuplicates(self, submissions, target_path):
         for file in submissions:
-            print("Processing", file.path.name)
-            name = self.getStudentNameFromSubmissionFile(file)
-            student = self.pathTo['project'] / name
-            unpackedFile = student / file.submitted_filename
-            if self.isArchive(file):
-                target = unpackedFile.with_name(unpackedFile.stem)
-                unpack_archive(file.path, target, self.collisionHandler)
+            p = file.getUnpackedFilePath(target_path)
+            if p.exists():
+                continue
             else:
-                copy(file.path, unpackedFile, self.collisionHandler)
+                file.unpackTo(p)
+
+    def importStudentSubmissionsNumberingNewer(self, target_path):
+        self.importSubmissionsNumberingDuplicates(self.getSubmissionsOldestToYoungest(), target_path)
+
+    def importStudentSubmissionsNumberingOlder(self, target_path):
+        self.importSubmissionsNumberingDuplicates(self.getSubmissionsYoungestToOldest(), target_path)
+
+    def importSubmissionsNumberingDuplicates(self, submissions, target_path):
+        for file in submissions:
+            p = file.getUnpackedFilePath(target_path)
+            p = append_number_to_make_unique(p)
+            file.unpackTo(p)
 
     def getSubmissionsOldestToYoungest(self):
         submissions = list(self.getStudentSubmissionFiles())
@@ -101,56 +109,15 @@ class UnpackCommand:
     def getSubmissionsYoungestToOldest(self):
         return reversed(self.getSubmissionsOldestToYoungest())
 
-    def isArchive(self, file):
-        return file.suffix in get_supported_archive_extensions()
-
-
-def get_supported_archive_extensions():
-    return [extension for disc in shutil.get_unpack_formats() for extension in disc[1]]
-
 
 def mkdir(d):
     d.mkdir(parents=True)
 
 
-def replace_collision_handler(operation, source, destination):
-    return destination
-
-
-def skip_collision_handler(operation, source, destination):
-    raise SkipCollisionException()
-
-
-class SkipCollisionException(Exception):
-    pass
-
-
-def raise_exception_collision_handler(operation, source, destination):
-    raise Exception(f'COLISION: cannot {operation} <{source}> because <{destination}> exists.')
-
-
-def append_number_collision_handler(operation, source, destination):
-    return append_number_to_make_unique(destination)
-
-
-def unpack_archive(s, d, collision_handler=raise_exception_collision_handler):
-    try:
-        if d.exists() and d.is_file():
-            d = collision_handler('unpach_archive', s, d)
-        shutil.unpack_archive(str(s), str(d))
-    except SkipCollisionException:
-        pass
-
-
-def copy(s, d, collision_callback=raise_exception_collision_handler):
-    try:
-        if d.exists() and d.is_dir():
-            d = d / s.name
-        if d.exists() and d.is_file():
-            d = collision_callback('copy', s, d)
-        shutil.copy2(str(s), str(d))
-    except SkipCollisionException:
-        pass
+def copy(s, d):
+    if d.exists() and d.is_dir():
+        d = d / s.name
+    shutil.copy2(str(s), str(d))
 
 
 def append_number_to_make_unique(file):
