@@ -1,113 +1,133 @@
-from click.testing import CliRunner  # type: ignore  # noqa: F401
 import pytest  # type: ignore  # noqa: F401
-import os
-import shutil
-
 from kodiak.__main__ import unpack
 
+from click.testing import CliRunner  # type: ignore  # noqa: F401
+import shutil
+import pathlib
 
-FUNCTIONAL_TEST_DIR = os.path.dirname(__file__)
-TEMP_DIR = os.path.join(FUNCTIONAL_TEST_DIR, 'temp')
-FIXTURES_DIR = os.path.join(FUNCTIONAL_TEST_DIR, 'fixtures')
+
+TEMP_PATH = pathlib.Path(__file__).parent / 'temp'
 
 
 def setup_function(function):
-    os.makedirs(TEMP_DIR, exist_ok=True)
+    TEMP_PATH.mkdir(exist_ok=True)
 
 
 def teardown_function(function):
-    shutil.rmtree(TEMP_DIR)
+    shutil.rmtree(TEMP_PATH)
 
 
 @pytest.fixture
 def archive_file():
-    root = 'Homework 4 Download May 25, 2018 1118 AM'
-    mkdir(root)
-    mkdir(root, 'HW4')
-    mkfile(root, 'HW4', 'x')
-    mkfile(root, 'HW4', 'y')
-    mkdir(root, 'HW4', 'z')
-    mkfile(root, 'HW4', 'z', 'q')
-    archive(
-        [root, 'HW4'],
-        [root, '11690-66708 - Charlie Brown - Feb 9, 2017 614 PM - CharlieB_HW4']
+    archive_path = generate_homework_archive(
+        'Homework 4 Download May 25, 2018 1118 AM', [
+            ('11690-66708 - Charlie Brown - Feb 9, 2017 614 PM - CharlieB_HW4', 'archive', ''),
+            ('11824-66708 - Lucy Pelt - Feb 9, 2017 1004 PM - LPelt_HW4.pdf', 'file', 'oldest'),
+            ('11824-66708 - Lucy Pelt - Feb 9, 2017 1007 PM - LPelt_HW4.pdf', 'file', 'middle'),
+            ('11824-66708 - Lucy Pelt - Feb 9, 2017 1017 PM - LPelt_HW4.pdf', 'file', 'newest'),
+        ]
     )
-    rmdir(root, 'HW4')
-    mkfile(root, '11824-66708 - Lucy Pelt - Feb 9, 2017 1004 PM - LPelt_HW4.pdf', contents='oldest')
-    mkfile(root, '11824-66708 - Lucy Pelt - Feb 9, 2017 1007 PM - LPelt_HW4.pdf', contents='middle')
-    mkfile(root, '11824-66708 - Lucy Pelt - Feb 9, 2017 1017 PM - LPelt_HW4.pdf', contents='newest')
-    archive([root], [root])
-    return intemp(root + '.zip')
+    return str(archive_path)
 
 
 def test_unpack_no_opts(archive_file):
-    result = CliRunner().invoke(unpack, [archive_file, intemp('h4')])
-    print(result.output)
-    checkCliRunnerErrors(result)
-
-    assert listdir('h4') == ['.kodiak', 'Brown_Charlie', 'Pelt_Lucy']
-    assert listdir('h4', 'Brown_Charlie', 'CharlieB_HW4') == ['x', 'y', 'z']
-    assert listdir('h4', 'Brown_Charlie', 'CharlieB_HW4', 'z') == ['q']
-    assert listdir('h4', 'Pelt_Lucy') == ['LPelt_HW4 (1).pdf', 'LPelt_HW4 (2).pdf', 'LPelt_HW4.pdf']
+    run_kodiak_unpack(archive_file, 'h4', duplicates=None)
+    h4 = TEMP_PATH / 'h4'
+    assert listdir(h4) == ['.kodiak', 'Brown_Charlie', 'Pelt_Lucy']
+    assert listdir(h4 / 'Brown_Charlie' / 'CharlieB_HW4') == ['x', 'y', 'z']
+    assert listdir(h4 / 'Brown_Charlie' / 'CharlieB_HW4' / 'z') == ['q']
+    assert listdir(h4 / 'Pelt_Lucy') == ['LPelt_HW4 (1).pdf', 'LPelt_HW4 (2).pdf', 'LPelt_HW4.pdf']
 
 
 def test_unpack_duplicates_number_newest(archive_file):
-    result = CliRunner().invoke(unpack, ['--duplicates=number-newer', archive_file, intemp('h4')])
-    print(result.output)
-    checkCliRunnerErrors(result)
-
-    with open(intemp('h4', 'Pelt_Lucy', 'LPelt_HW4.pdf')) as f:
-        assert f.read() == 'oldest'
-
-    with open(intemp('h4', 'Pelt_Lucy', 'LPelt_HW4 (2).pdf')) as f:
-        assert f.read() == 'newest'
+    run_kodiak_unpack(archive_file, 'h4', duplicates='number-newer')
+    lucy_path = TEMP_PATH / 'h4' / 'Pelt_Lucy'
+    lpelt_hw4_pdf = lucy_path / 'LPelt_HW4.pdf'
+    lpelt_hw4_pdf_2 = lucy_path / 'LPelt_HW4 (2).pdf'
+    assert lpelt_hw4_pdf.read_text() == 'oldest'
+    assert lpelt_hw4_pdf_2.read_text() == 'newest'
 
 
 def test_unpack_duplicates_number_older(archive_file):
-    result = CliRunner().invoke(unpack, ['--duplicates=number-older', archive_file, intemp('h4')])
-    print(result.output)
-    checkCliRunnerErrors(result)
-
-    with open(intemp('h4', 'Pelt_Lucy', 'LPelt_HW4.pdf')) as f:
-        assert f.read() == 'newest'
-
-    with open(intemp('h4', 'Pelt_Lucy', 'LPelt_HW4 (2).pdf')) as f:
-        assert f.read() == 'oldest'
+    run_kodiak_unpack(archive_file, 'h4', duplicates='number-older')
+    lucy_path = TEMP_PATH / 'h4' / 'Pelt_Lucy'
+    lpelt_hw4_pdf = lucy_path / 'LPelt_HW4.pdf'
+    lpelt_hw4_pdf_2 = lucy_path / 'LPelt_HW4 (2).pdf'
+    assert lpelt_hw4_pdf.read_text() == 'newest'
+    assert lpelt_hw4_pdf_2.read_text() == 'oldest'
 
 
 def test_unpack_duplicates_keep_newest_only(archive_file):
-    result = CliRunner().invoke(unpack, ['--duplicates=newest-only', archive_file, intemp('h4')])
-    print(result.output)
-    checkCliRunnerErrors(result)
-
-    assert len(listdir('h4', 'Pelt_Lucy')) == 1
-
-    result_mtime = os.stat(intemp('h4', 'Pelt_Lucy', 'LPelt_HW4.pdf')).st_mtime
-
-    import datetime
-    result_str = datetime.datetime.fromtimestamp(
-        result_mtime
-    ).strftime('%b %-d, %Y %I%M')
-    assert result_str == 'Feb 9, 2017 1017'
+    run_kodiak_unpack(archive_file, 'h4', duplicates='newest-only')
+    h4 = TEMP_PATH / 'h4'
+    assert len(listdir(h4 / 'Pelt_Lucy')) == 1
+    assert (h4 / 'Pelt_Lucy' / 'LPelt_HW4.pdf').read_text() == 'newest'
 
 
 def test_unpack_duplicates_keep_oldest_only(archive_file):
-    result = CliRunner().invoke(unpack, ['--duplicates=oldest-only', archive_file, intemp('h4')])
-    print(result.output)
+    run_kodiak_unpack(archive_file, 'h4', duplicates='oldest-only')
+    h4 = TEMP_PATH / 'h4'
+    assert len(listdir(h4 / 'Pelt_Lucy')) == 1
+    assert (h4 / 'Pelt_Lucy' / 'LPelt_HW4.pdf').read_text() == 'oldest'
+
+
+def generate_homework_archive(target_path, submission_descs):
+    target_path = TEMP_PATH / target_path
+    for name, type, content in submission_descs:
+        if type == 'file':
+            mkfile(target_path/name).write_text(content)
+        if type == 'archive':
+            mk_archive_submission(target_path/name)
+    archive = mkarchive(target_path, target_path)
+    rmtree(target_path)
+    return archive
+
+
+def mk_archive_submission(target_path):
+    cb_path = mkdir(TEMP_PATH/'cb')
+    mkfile(cb_path/'x')
+    mkfile(cb_path/'y')
+    z_path = mkdir(cb_path/'z')
+    mkfile(z_path/'q')
+    mkarchive(target_path, cb_path)
+    rmtree(cb_path)
+    return target_path
+
+
+def mk_file_submission(target_path):
+    return mkfile(target_path)
+
+
+def mkdir(path):
+    path.mkdir()
+    return path
+
+
+def mkfile(path):
+    path.touch()
+    return path
+
+
+def mkarchive(dest_path, src_path):
+    shutil.make_archive(str(dest_path), 'zip', str(src_path))
+    return dest_path.with_suffix('.zip')
+
+
+def rmtree(path):
+    shutil.rmtree(path)
+
+
+def run_kodiak_unpack(archive_file, target_dir, duplicates=None):
+    args = []
+    if duplicates:
+        args.append('--duplicates='+duplicates)
+    args.extend([archive_file, str(TEMP_PATH / target_dir)])
+    result = CliRunner().invoke(unpack, args)
     checkCliRunnerErrors(result)
-
-    assert len(listdir('h4', 'Pelt_Lucy')) == 1
-
-    result_mtime = os.stat(intemp('h4', 'Pelt_Lucy', 'LPelt_HW4.pdf')).st_mtime
-
-    import datetime
-    result_str = datetime.datetime.fromtimestamp(
-        result_mtime
-    ).strftime('%b %-d, %Y %I%M')
-    assert result_str == 'Feb 9, 2017 1004'
 
 
 def checkCliRunnerErrors(result):
+    print(result.output)
     if result.exit_code != 0:
         if result.exception:
             import traceback
@@ -116,30 +136,5 @@ def checkCliRunnerErrors(result):
         assert False
 
 
-def mkdir(*args):
-    os.mkdir(intemp(*args))
-
-
-def mkfile(*args, contents=''):
-    with open(intemp(*args), 'w') as f:
-        f.write(contents)
-
-
-def intemp(*args):
-    return join(TEMP_DIR, *args)
-
-
-def join(*args):
-    return os.sep.join(args)
-
-
-def archive(src_dir, target_sans_extension):
-    shutil.make_archive(intemp(*target_sans_extension), 'zip', intemp(*src_dir))
-
-
-def rmdir(*args):
-    shutil.rmtree(intemp(*args))
-
-
-def listdir(*args):
-    return sorted(os.listdir(intemp(*args)))
+def listdir(path):
+    return sorted([f.name for f in path.iterdir()])
