@@ -1,6 +1,8 @@
 import shutil
 import pathlib
 from kodiak.submission import SubmissionFile
+import pickle
+from typing import Dict
 
 
 class UnpackCommand:
@@ -9,6 +11,7 @@ class UnpackCommand:
         self.projectDirectory = projectDirectory.resolve()
         self.duplicates_option = duplicates
         self.definePaths()
+        self.unpackMap: Dict[str, str] = {}
 
     def definePaths(self):
         self.pathTo = {
@@ -25,6 +28,7 @@ class UnpackCommand:
         self.fixMtimesOnSubmissionFiles()
         self.createStudentDirectories()
         self.importStudentSubmissions()
+        self.writeReverseMap()
 
     def createProjectStructure(self):
         print(f"Creating project in {self.pathTo['project']}")
@@ -87,6 +91,7 @@ class UnpackCommand:
             if p.exists():
                 continue
             else:
+                self.unpackMap[file.path.name] = str(file.getUnpackedFilePath(target_path).name)
                 file.unpackTo(p)
 
     def importStudentSubmissionsNumberingNewer(self, target_path):
@@ -99,6 +104,7 @@ class UnpackCommand:
         for file in submissions:
             p = file.getUnpackedFilePath(target_path)
             p = append_number_to_make_unique(p)
+            self.unpackMap[str(target_path)] = str(file.getUnpackedFilePath(target_path).name)
             file.unpackTo(p)
 
     def getSubmissionsOldestToYoungest(self):
@@ -108,6 +114,9 @@ class UnpackCommand:
 
     def getSubmissionsYoungestToOldest(self):
         return reversed(self.getSubmissionsOldestToYoungest())
+
+    def writeReverseMap(self):
+        pickle.dump(self.unpackMap, (self.pathTo['internal'] / 'unpackMap.dict').open('wb'))
 
 
 def mkdir(d):

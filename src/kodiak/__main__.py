@@ -2,6 +2,7 @@ import sys
 import click
 from pathlib import Path
 from kodiak.unpack import UnpackCommand
+from kodiak.pack import PackCommand
 
 
 if not (sys.version_info.major == 3 and sys.version_info.minor >= 6):
@@ -42,7 +43,7 @@ def main():
     help='How to handle duplicate submissions.'
 )
 def unpack(archive_file, directory, duplicates):
-    '''Unpacks existing ARCHIVE_FILE into non-existing DIRECTORY.
+    '''Unpack ARCHIVE_FILE into DIRECTORY.
 
     OVERVIEW
 
@@ -71,6 +72,23 @@ def unpack(archive_file, directory, duplicates):
     archiveFile = Path(archive_file)
     projectDirectory = Path(directory)
     UnpackCommand(archiveFile, projectDirectory, duplicates).unpack()
+
+
+@main.command()
+@click.argument(
+    'DIRECTORY',
+    type=click.Path(
+        exists=True,
+        file_okay=False,
+        writable=True,
+        readable=True,
+        allow_dash=False,
+        resolve_path=True
+    )
+)
+def pack(directory):
+    '''Pack graded DIRECTORY into archive.'''
+    PackCommand(Path(directory)).pack()
 
 
 if __name__ == '__main__':
