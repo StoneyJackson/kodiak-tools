@@ -2,6 +2,7 @@ VERSION:=$(shell cat VERSION)
 
 PYTEST_COV_OPTS=--cov=src --cov-report term-missing
 PYTEST_FLAKE8_OPTS=--flake8
+
 PYTEST_MYPY_OPTS=--mypy 
 PYTEST_OPTS=-v $(PYTEST_COV_OPTS) $(PYTEST_FLAKE8_OPTS) $(PYTEST_MYPY_OPTS)
 

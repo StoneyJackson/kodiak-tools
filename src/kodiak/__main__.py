@@ -1,8 +1,7 @@
 import sys
 import click
-from pathlib import Path
-from kodiak.unpack import UnpackCommand
-from kodiak.pack import PackCommand
+import pathlib
+from kodiak import core
 
 
 if not (sys.version_info.major == 3 and sys.version_info.minor >= 6):
@@ -39,56 +38,92 @@ def main():
 @click.option(
     '--duplicates',
     type=click.Choice(['number-newer', 'newest-only', 'oldest-only', 'number-older']),
-    default='number-newer',
+    default='number-older',
     help='How to handle duplicate submissions.'
 )
 def unpack(archive_file, directory, duplicates):
     '''Unpack ARCHIVE_FILE into DIRECTORY.
 
-    OVERVIEW
+OVERVIEW
 
-    A student directory is created for each student in DIRECTORY.
-    Student directories have the form <LASTNAME>_<FIRSTNAME>.
-    Each student's submissions are placed into their student directory.
+A student directory is created for each student in DIRECTORY.
+Student directories have the form <LASTNAME>_<FIRSTNAME>.
+Student submissions are renamed to the name students gave them
+before uploading their files to Kodiak. This can create collisions
+when unpacking if the same student submits two files with the same
+name (i.e., resubmits the same file). See the section on DUPLICATES
+STRATEGIES to learn the different strategies offered to handle
+duplicates.
 
-    DUPLICATES
+DUPLICATES STRATEGIES
 
-    Submission files are renamed to the name the student gave the file before uploading to Kodiak.
-    If a student resubmits the same file (or another file with the same name) there will be
-    duplicates that must be handled. By default kodiak will append (k) to the k_th duplicate file
-    in order from oldest to newest in submission time. For example, if a student submits
-    hw2.txt five times, the first submission is hw2.txt, the next is hw2 (1).txt, ..., the most
-    recent is hw2 (4).txt. You can control how kodiak handles duplicates by passing one of the
-    following values using the --duplicates option:
+Unpack offers four strategies for handling duplicate submissions.
+Use the "--duplicates=STRATEGY" option to specify the strategy
+unpack should use.
 
-        number-newer\t(default) Number duplicates from oldest to newest.
+number-older
 
-        number-older\tNumber duplicates from newest to oldest.
+    (default) Append (k) to each duplicate file older than the newest file in increasing order of age.  For example,if "foo.txt" was submitted 3 times, using this strategy, the newest will be named "foo.txt", the next oldest "foo (1).txt", and the oldest "foo (2).txt".  This is the default assuming most instructors want easy access to the most recently submitted copy, while still having access to older copies "just in case".
 
-        oldest-only\tKeep only the oldest.
+number-newer
 
-        newest-only\tKeep only the newest.
+    Append (k) to each duplicate file newer than the oldest file in decreasing order of age.  For example, if "foo.txt" was submitted 3 times, using this strategy, the oldest will be "foo.txt", the next newest will be "foo (1).txt", and the newest will be "foo (2).txt".  This strategy more closely mimics how modern filesystems will number files.  The newer files get the decoration.
+
+oldest-only
+
+    Keep only the oldest copy.  The newer copies will remain in the original archive, and will appear in the final graded archive.  But they will not appear in the working submissions directory.
+
+newest-only
+
+    Keep only the newest copy.  The older copies will remain in the original archive, and will appear in the final graded archive.  But they will not appear in the working submissions directory.
     '''
-    archiveFile = Path(archive_file)
-    projectDirectory = Path(directory)
-    UnpackCommand(archiveFile, projectDirectory, duplicates).unpack()
+    archiveFile = pathlib.Path(archive_file)
+    projectDirectory = pathlib.Path(directory)
+
+    importer = {
+        'number-newer': core.IMPORT_NUMBERING_NEWER,
+        'number-older': core.IMPORT_NUMBERING_OLDER,
+        'oldest-only': core.IMPORT_OLDEST_ONLY,
+        'newest-only': core.IMPORT_NEWEST_ONLY
+    }[duplicates]
 
 
-@main.command()
-@click.argument(
-    'DIRECTORY',
-    type=click.Path(
-        exists=True,
-        file_okay=False,
-        writable=True,
-        readable=True,
-        allow_dash=False,
-        resolve_path=True
-    )
-)
-def pack(directory):
-    '''Pack graded DIRECTORY into archive.'''
-    PackCommand(Path(directory)).pack()
+    click.echo(f'Importing {archiveFile}')
+    click.echo(f'     into {projectDirectory}')
+    click.echo(f'''
+Using the "{duplicates}" strategy to resolve duplicate
+submissions by the same student. For more information
+
+    kodiak unpack --help
+
+If you want a different strategy, delete the project
+and run kodiak again specifying your desired strategy. E.g.,
+
+    rm -rf "{projectDirectory}"
+    kodiak unpack --duplicates=STRATEGY \\
+        "{archiveFile}" \\
+        "{projectDirectory}"
+''')
+
+    core.Project(projectDirectory).importArchive(archiveFile, importer)
+    print('Done.')
+
+
+# @main.command()
+# @click.argument(
+#     'DIRECTORY',
+#     type=click.Path(
+#         exists=True,
+#         file_okay=False,
+#         writable=True,
+#         readable=True,
+#         allow_dash=False,
+#         resolve_path=True
+#     )
+# )
+# def pack(directory):
+#     '''Pack graded DIRECTORY into archive.'''
+#     PackCommand(Path(directory)).pack()
 
 
 if __name__ == '__main__':
