@@ -1,5 +1,4 @@
-from kodiak.__main__ import unpack
-from click.testing import CliRunner  # type: ignore  # noqa: F401
+from tests.functional.runners import run_kodiak_unpack
 
 
 def test_unpack_no_opts(temp_path, archive_file):
@@ -41,25 +40,6 @@ def test_unpack_duplicates_keep_oldest_only(temp_path, archive_file):
     h4 = temp_path / 'h4'
     assert len(listdir(h4 / 'Pelt_Lucy')) == 1
     assert (h4 / 'Pelt_Lucy' / 'LPelt_HW4.pdf').read_text() == 'oldest'
-
-
-def run_kodiak_unpack(temp_path, archive_file, target_dir, duplicates=None):
-    args = []
-    if duplicates:
-        args.append('--duplicates='+duplicates)
-    args.extend([archive_file, str(temp_path / target_dir)])
-    result = CliRunner().invoke(unpack, args)
-    checkCliRunnerErrors(result)
-
-
-def checkCliRunnerErrors(result):
-    print(result.output)
-    if result.exit_code != 0:
-        if result.exception:
-            import traceback
-            traceback.print_tb(result.exception.__traceback__)
-            print(result.exception)
-        assert False
 
 
 def listdir(path):
