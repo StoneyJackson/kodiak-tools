@@ -6,20 +6,18 @@ import shutil
 import pathlib
 
 
-TEMP_PATH = pathlib.Path(__file__).parent / 'temp'
-
-
-def setup_function(function):
-    TEMP_PATH.mkdir(exist_ok=True)
-
-
-def teardown_function(function):
-    shutil.rmtree(TEMP_PATH)
+@pytest.fixture
+def temp_path():
+    t = pathlib.Path(__file__).parent / 'temp'
+    t.mkdir(exist_ok=True)
+    yield t
+    shutil.rmtree(t)
 
 
 @pytest.fixture
-def archive_file():
+def archive_file(temp_path):
     archive_path = generate_homework_archive(
+        temp_path,
         'Homework 4 Download May 25, 2018 1118 AM', [
             ('11690-66708 - Charlie Brown - Feb 9, 2017 614 PM - CharlieB_HW4', 'archive', ''),
             ('11824-66708 - Lucy Pelt - Feb 9, 2017 1004 PM - LPelt_HW4.pdf', 'file', 'oldest'),
@@ -30,61 +28,61 @@ def archive_file():
     return str(archive_path)
 
 
-def test_unpack_no_opts(archive_file):
-    run_kodiak_unpack(archive_file, 'h4', duplicates=None)
-    h4 = TEMP_PATH / 'h4'
+def test_unpack_no_opts(temp_path, archive_file):
+    run_kodiak_unpack(temp_path, archive_file, 'h4', duplicates=None)
+    h4 = temp_path / 'h4'
     assert listdir(h4) == ['.kodiak', 'Brown_Charlie', 'Pelt_Lucy']
     assert listdir(h4 / 'Brown_Charlie' / 'CharlieB_HW4') == ['x', 'y', 'z']
     assert listdir(h4 / 'Brown_Charlie' / 'CharlieB_HW4' / 'z') == ['q']
     assert listdir(h4 / 'Pelt_Lucy') == ['LPelt_HW4 (1).pdf', 'LPelt_HW4 (2).pdf', 'LPelt_HW4.pdf']
 
 
-def test_unpack_duplicates_number_newest(archive_file):
-    run_kodiak_unpack(archive_file, 'h4', duplicates='number-newer')
-    lucy_path = TEMP_PATH / 'h4' / 'Pelt_Lucy'
+def test_unpack_duplicates_number_newest(temp_path, archive_file):
+    run_kodiak_unpack(temp_path, archive_file, 'h4', duplicates='number-newer')
+    lucy_path = temp_path / 'h4' / 'Pelt_Lucy'
     lpelt_hw4_pdf = lucy_path / 'LPelt_HW4.pdf'
     lpelt_hw4_pdf_2 = lucy_path / 'LPelt_HW4 (2).pdf'
     assert lpelt_hw4_pdf.read_text() == 'oldest'
     assert lpelt_hw4_pdf_2.read_text() == 'newest'
 
 
-def test_unpack_duplicates_number_older(archive_file):
-    run_kodiak_unpack(archive_file, 'h4', duplicates='number-older')
-    lucy_path = TEMP_PATH / 'h4' / 'Pelt_Lucy'
+def test_unpack_duplicates_number_older(temp_path, archive_file):
+    run_kodiak_unpack(temp_path, archive_file, 'h4', duplicates='number-older')
+    lucy_path = temp_path / 'h4' / 'Pelt_Lucy'
     lpelt_hw4_pdf = lucy_path / 'LPelt_HW4.pdf'
     lpelt_hw4_pdf_2 = lucy_path / 'LPelt_HW4 (2).pdf'
     assert lpelt_hw4_pdf.read_text() == 'newest'
     assert lpelt_hw4_pdf_2.read_text() == 'oldest'
 
 
-def test_unpack_duplicates_keep_newest_only(archive_file):
-    run_kodiak_unpack(archive_file, 'h4', duplicates='newest-only')
-    h4 = TEMP_PATH / 'h4'
+def test_unpack_duplicates_keep_newest_only(temp_path, archive_file):
+    run_kodiak_unpack(temp_path, archive_file, 'h4', duplicates='newest-only')
+    h4 = temp_path / 'h4'
     assert len(listdir(h4 / 'Pelt_Lucy')) == 1
     assert (h4 / 'Pelt_Lucy' / 'LPelt_HW4.pdf').read_text() == 'newest'
 
 
-def test_unpack_duplicates_keep_oldest_only(archive_file):
-    run_kodiak_unpack(archive_file, 'h4', duplicates='oldest-only')
-    h4 = TEMP_PATH / 'h4'
+def test_unpack_duplicates_keep_oldest_only(temp_path, archive_file):
+    run_kodiak_unpack(temp_path, archive_file, 'h4', duplicates='oldest-only')
+    h4 = temp_path / 'h4'
     assert len(listdir(h4 / 'Pelt_Lucy')) == 1
     assert (h4 / 'Pelt_Lucy' / 'LPelt_HW4.pdf').read_text() == 'oldest'
 
 
-def generate_homework_archive(target_path, submission_descs):
-    target_path = TEMP_PATH / target_path
+def generate_homework_archive(temp_path, target_path, submission_descs):
+    target_path = temp_path / target_path
     for name, type, content in submission_descs:
         if type == 'file':
             mkfile(target_path/name).write_text(content)
         if type == 'archive':
-            mk_archive_submission(target_path/name)
+            mk_archive_submission(temp_path, target_path/name)
     archive = mkarchive(target_path, target_path)
     rmtree(target_path)
     return archive
 
 
-def mk_archive_submission(target_path):
-    cb_path = mkdir(TEMP_PATH/'cb')
+def mk_archive_submission(temp_path, target_path):
+    cb_path = mkdir(temp_path/'cb')
     mkfile(cb_path/'x')
     mkfile(cb_path/'y')
     z_path = mkdir(cb_path/'z')
@@ -117,11 +115,11 @@ def rmtree(path):
     shutil.rmtree(path)
 
 
-def run_kodiak_unpack(archive_file, target_dir, duplicates=None):
+def run_kodiak_unpack(temp_path, archive_file, target_dir, duplicates=None):
     args = []
     if duplicates:
         args.append('--duplicates='+duplicates)
-    args.extend([archive_file, str(TEMP_PATH / target_dir)])
+    args.extend([archive_file, str(temp_path / target_dir)])
     result = CliRunner().invoke(unpack, args)
     checkCliRunnerErrors(result)
 
