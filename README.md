@@ -77,10 +77,33 @@ To run tests manually check out the test rule in the Makefile.
 
 ## Deployment
 
-1. Download a release from [URL]().
-2. Rename it to kodiak, or kodiak.pyz.
-3. Make sure it is executable.
-4. Run it directly or place it in a folder that is in your systems path.
+Download latest stable release from [URL]().
+
+```
+curl URL > file
+```
+
+Rename it to kodiak, or kodiak.pyz.
+
+```
+mv file kodiak
+```
+
+Make sure it is executable.
+
+```
+chmod +x kodiak
+```
+
+Move it to a directory that is in your system's path.
+
+```
+mv kodaik ~/bin
+```
+
+Start using kodiak. Start with help
+
+`kodiak --help`
 
 ## Built With
 
