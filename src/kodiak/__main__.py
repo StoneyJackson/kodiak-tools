@@ -4,11 +4,15 @@ import pathlib
 from kodiak import core
 
 
+__version__='0.1.0'
+
+
 if not (sys.version_info.major == 3 and sys.version_info.minor >= 6):
     sys.exit("Requires Python 3.6+")
 
 
 @click.group()
+@click.version_option(__version__)
 def main():
     pass
 
@@ -42,7 +46,7 @@ def main():
     help='How to handle duplicate submissions.'
 )
 def init(directory, archive, duplicates):
-    '''Create a new kodiak project in DIRECTORY from ARCHIVE.
+    '''Create project in DIRECTORY from ARCHIVE.
 
 OVERVIEW
 
