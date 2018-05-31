@@ -38,10 +38,13 @@ Homework 4 Download May 25, 2018 1118 AM.zip
 
 Upload the archive in gradedArchive to Kodiak.
 
+## 2. Requirements
 
-## 2. Download and Install
+Requires Python 3.6 or higher to run.
 
-1. [Download latest release](https://github.com/StoneyJackson/kodiak-tools/releases).
+## 3. Download and Install
+
+1. [Download latest stable release](https://github.com/StoneyJackson/kodiak-tools/releases).
 
 2. Rename it to kodiak, or kodiak.pyz.
 
@@ -69,7 +72,7 @@ Upload the archive in gradedArchive to Kodiak.
     ```
 
 
-## 3. Getting Started as a Developer
+## 4. Getting Started as a Developer
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
@@ -81,6 +84,7 @@ command-line:
 1. Python 3.6+
 2. pipenv
 3. GNU make
+4. [hub](https://github.com/github/hub)
 
 ### Installing the Development Environment
 
@@ -113,7 +117,7 @@ symlinks into src so that changes you make in src will be immediately reflected 
     kodiak --help
     ```
 
-## Running the tests
+### Running the tests
 
 Build and run the unit and functional tests using make as follows.
 
@@ -132,8 +136,11 @@ To run tests manually check out the test rule in the Makefile.
 
 `make test` uses flake8 to check the style of code. Flake8's configuration is available in .flake8.
 
+### Making a release
 
-## 4. Built With
+`make release`
+
+## 5. Built With
 
 * [click](http://click.pocoo.org/5/) - Framework for building command-line applications
 * [zipapp](https://docs.python.org/3/library/zipapp.html) - Packaging into standalone, executable zips
@@ -147,24 +154,24 @@ To run tests manually check out the test rule in the Makefile.
 * [pipenv](https://docs.pipenv.org/) - Virtual environment and dependency manager
 * [GNU make](https://www.gnu.org/software/make/) - Developer task automation
 
-## 5. Contributing
+## 6. Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
-## 6. Versioning
+## 7. Versioning
 
 We use [RomVer](http://blog.legacyteam.info/2015/12/romver-romantic-versioning/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags).
 
-## 7. Authors
+## 8. Authors
 
 * [Stoney Jackson](https://github.com/StoneyJackson)
 
 See also the list of [contributors](https://github.com/StoneyJackson/kodiak-tools/contributors) who participated in this project.
 
-## 8. License
+## 9. License
 
 This project is licensed under the GPLv3 - see the [LICENSE](LICENSE) file for details
 
-## 9. Acknowledgments
+## 10. Acknowledgments
 
 * Hat tip to all the awesome development tools!

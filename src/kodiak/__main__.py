@@ -4,7 +4,7 @@ import pathlib
 from kodiak import core
 
 
-__version__='1.0.0'
+__version__='1.0.1-dev'
 
 
 if not (sys.version_info.major == 3 and sys.version_info.minor >= 6):

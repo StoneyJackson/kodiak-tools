@@ -15,9 +15,24 @@ dist: VERSION $(wildcard *.py)
 	rm dist/kodiak-tools/requirements.txt
 	rm -rf dist/kodiak-tools/*.dist-info
 	python -m zipapp dist/kodiak-tools -p "/usr/bin/env python3" -o dist/kodiak-tools-$(VERSION).pyz
+	rm -rf dist/kodiak-tools/
 
 clean:
 	rm -rf dist
 
 test:
 	PYTHONPATH=./src MYPYPATH=./src pytest $(PYTEST_OPTS) tests
+
+release:
+	git checkout master
+	git pull
+	make test
+	bumpversion release
+	make dist
+	git push origin master --tags
+	make publish-release
+	bumpversion --no-tag patch
+	git push origin master
+
+publish-release:
+	hub release create -a dist/kodiak-tools-$(VERSION).pyz v$(VERSION)
