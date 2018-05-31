@@ -15,21 +15,21 @@ def main():
 
 @main.command()
 @click.argument(
-    'archive_file',
+    'directory',
     type=click.Path(
-        exists=True,
-        dir_okay=False,
+        exists=False,
+        file_okay=False,
+        writable=True,
         readable=True,
         allow_dash=False,
         resolve_path=True
     )
 )
 @click.argument(
-    'directory',
+    'archive',
     type=click.Path(
-        exists=False,
-        file_okay=False,
-        writable=True,
+        exists=True,
+        dir_okay=False,
         readable=True,
         allow_dash=False,
         resolve_path=True
@@ -41,29 +41,22 @@ def main():
     default='number-older',
     help='How to handle duplicate submissions.'
 )
-def unpack(archive_file, directory, duplicates):
-    '''Unpack ARCHIVE_FILE into DIRECTORY.
+def init(directory, archive, duplicates):
+    '''Create a new kodiak project in DIRECTORY from ARCHIVE.
 
 OVERVIEW
 
-A student directory is created for each student in DIRECTORY.
-Student directories have the form <LASTNAME>_<FIRSTNAME>.
-Student submissions are renamed to the name students gave them
-before uploading their files to Kodiak. This can create collisions
-when unpacking if the same student submits two files with the same
-name (i.e., resubmits the same file). See the section on DUPLICATES
-STRATEGIES to learn the different strategies offered to handle
-duplicates.
+DIRECTORY is created if it doesn't exist and blessed as a kodiak project (DIRECOTRY/.kodiak).  ARCHIVE is copied into DIRECOTORY/originalArchive and extracted to DIRECTORY/originalSubmissions.  Submission filenames are
+demangled and organized into student folders under DIRECTORY/submissions.  If a stdunent the same named file more than once, these duplicates are handeled according to a duplicates strategy.  See section on DUPLICATES STRATEGIES for details.
 
 DUPLICATES STRATEGIES
 
-Unpack offers four strategies for handling duplicate submissions.
-Use the "--duplicates=STRATEGY" option to specify the strategy
-unpack should use.
+Use the "--duplicates=STRATEGY" option to specify one of the
+strategies listed below.
 
-number-older
+number-older (default)
 
-    (default) Append (k) to each duplicate file older than the newest file in increasing order of age.  For example,if "foo.txt" was submitted 3 times, using this strategy, the newest will be named "foo.txt", the next oldest "foo (1).txt", and the oldest "foo (2).txt".  This is the default assuming most instructors want easy access to the most recently submitted copy, while still having access to older copies "just in case".
+    Append (k) to each duplicate file older than the newest file in increasing order of age.  For example,if "foo.txt" was submitted 3 times, using this strategy, the newest will be named "foo.txt", the next oldest "foo (1).txt", and the oldest "foo (2).txt".  This is the default assuming most instructors want easy access to the most recently submitted copy, while still having access to older copies "just in case".
 
 number-newer
 
@@ -77,7 +70,7 @@ newest-only
 
     Keep only the newest copy.  The older copies will remain in the original archive, and will appear in the final graded archive.  But they will not appear in the working submissions directory.
     '''
-    archiveFile = pathlib.Path(archive_file)
+    archiveFile = pathlib.Path(archive)
     projectDirectory = pathlib.Path(directory)
 
     importer = {
@@ -87,10 +80,14 @@ newest-only
         'newest-only': core.IMPORT_NEWEST_ONLY
     }[duplicates]
 
+    if projectDirectory.exists():
+        if '.kodiak' in [f.name for f in projectDirectory.iterdir()]:
+            raise Exception(f'"{projectDirectory} is already a Kodiak project."')
 
-    click.echo(f'Importing {archiveFile}')
-    click.echo(f'     into {projectDirectory}')
     click.echo(f'''
+Creating kodiak project in {projectDirectory}
+Importing {archiveFile}
+
 Using the "{duplicates}" strategy to resolve duplicate
 submissions by the same student. For more information
 
@@ -105,25 +102,52 @@ and run kodiak again specifying your desired strategy. E.g.,
         "{projectDirectory}"
 ''')
 
-    core.Project(projectDirectory).importArchive(archiveFile, importer)
+    core.Project(projectDirectory).runInitCommand(archiveFile, importer)
     print('Done.')
 
 
-# @main.command()
-# @click.argument(
-#     'DIRECTORY',
-#     type=click.Path(
-#         exists=True,
-#         file_okay=False,
-#         writable=True,
-#         readable=True,
-#         allow_dash=False,
-#         resolve_path=True
-#     )
-# )
-# def pack(directory):
-#     '''Pack graded DIRECTORY into archive.'''
-#     PackCommand(Path(directory)).pack()
+@main.command()
+@click.option(
+    '--project-root',
+    type=click.Path(
+        exists=True,
+        file_okay=False,
+        writable=True,
+        readable=True,
+        allow_dash=False,
+        resolve_path=True
+    ),
+    help='Root of project to pack.',
+    default='.',
+)
+def archive(project_root):
+    '''Build an archive for Kodiak.
+
+Archive graded and ungraded submissions into a file suitable for upload to Kodiak.
+The archive file will be placed in [project_root]/gradedArchive. The files in the archive
+will be placed in [project_root]/gradedSubmissions so you may inspect what you are about to
+upload.
+    '''
+    core.Project(pathlib.Path(project_root)).runArchiveCommand()
+
+
+@main.command()
+def formats():
+    '''List supported archive formats.
+
+Might include these on your syllabus.
+    '''
+
+    click.echo('''
+kodiak-tools supports the archive formats listed below. Let your students know.
+    ''')
+
+    for format in core.get_supported_archive_extensions():
+        click.echo(format)
+
+    click.echo('''
+If kodiak-tools encounters a submission of a format it doesn't know, it treats it like a normal file and will drop it in [project-root]/submissions.  You may manually extract this file.  When you are done, archive it again using the same format the student used, and delete the extracted contents.  Now `kodiak archive` will include it in the archive for uploading to Kodiak.
+    ''')
 
 
 if __name__ == '__main__':

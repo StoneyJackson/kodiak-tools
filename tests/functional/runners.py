@@ -1,21 +1,21 @@
 # from kodiak.__main__ import pack
-from kodiak.__main__ import unpack
+from kodiak.__main__ import init, archive
 from click.testing import CliRunner  # type: ignore  # noqa: F401
 import traceback
 
 
-def run_kodiak_unpack(temp_path, archive_file, target_dir, duplicates=None):
+def run_kodiak_init(temp_path, archive_file, target_dir, duplicates=None):
     args = []
     if duplicates:
         args.append('--duplicates='+duplicates)
-    args.extend([archive_file, str(temp_path / target_dir)])
-    result = CliRunner().invoke(unpack, args)
+    args.extend([str(temp_path / target_dir), archive_file])
+    result = CliRunner().invoke(init, args)
     checkCliRunnerErrors(result)
 
 
-# def run_kodiak_pack(temp_path, target_dir):
-#     result = CliRunner().invoke(pack, [str(temp_path / target_dir)])
-#     checkCliRunnerErrors(result)
+def run_kodiak_archive(temp_path, target_dir):
+    result = CliRunner().invoke(archive, [f'--project-root={temp_path / target_dir}'])
+    checkCliRunnerErrors(result)
 
 
 def checkCliRunnerErrors(result):

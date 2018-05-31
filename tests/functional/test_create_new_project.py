@@ -1,8 +1,8 @@
-from tests.functional.runners import run_kodiak_unpack
+from tests.functional.runners import run_kodiak_init
 
 
-def test_unpack_no_opts(temp_path, archive_file):
-    run_kodiak_unpack(temp_path, archive_file, 'h4', duplicates=None)
+def test_no_opts(temp_path, archive_file):
+    run_kodiak_init(temp_path, archive_file, 'h4', duplicates=None)
     h4 = temp_path / 'h4'
     subs = h4/'submissions'
     assert listdir(subs) == ['Brown_Charlie', 'Pelt_Lucy']
@@ -17,8 +17,8 @@ def test_unpack_no_opts(temp_path, archive_file):
     assert lpelt_hw4_pdf_2.read_text() == 'oldest'
 
 
-def test_unpack_duplicates_number_newest(temp_path, archive_file):
-    run_kodiak_unpack(temp_path, archive_file, 'h4', duplicates='number-newer')
+def test_duplicates_number_newest(temp_path, archive_file):
+    run_kodiak_init(temp_path, archive_file, 'h4', duplicates='number-newer')
     lucy_path = temp_path / 'h4' / 'submissions' / 'Pelt_Lucy'
     lpelt_hw4_pdf = lucy_path / 'LPelt_HW4.pdf'
     lpelt_hw4_pdf_2 = lucy_path / 'LPelt_HW4 (2).pdf'
@@ -26,8 +26,8 @@ def test_unpack_duplicates_number_newest(temp_path, archive_file):
     assert lpelt_hw4_pdf_2.read_text() == 'newest'
 
 
-def test_unpack_duplicates_number_older(temp_path, archive_file):
-    run_kodiak_unpack(temp_path, archive_file, 'h4', duplicates='number-older')
+def test_duplicates_number_older(temp_path, archive_file):
+    run_kodiak_init(temp_path, archive_file, 'h4', duplicates='number-older')
     lucy_path = temp_path / 'h4' / 'submissions' / 'Pelt_Lucy'
     lpelt_hw4_pdf = lucy_path / 'LPelt_HW4.pdf'
     lpelt_hw4_pdf_2 = lucy_path / 'LPelt_HW4 (2).pdf'
@@ -35,15 +35,15 @@ def test_unpack_duplicates_number_older(temp_path, archive_file):
     assert lpelt_hw4_pdf_2.read_text() == 'oldest'
 
 
-def test_unpack_duplicates_keep_newest_only(temp_path, archive_file):
-    run_kodiak_unpack(temp_path, archive_file, 'h4', duplicates='newest-only')
+def test_duplicates_keep_newest_only(temp_path, archive_file):
+    run_kodiak_init(temp_path, archive_file, 'h4', duplicates='newest-only')
     lucyDir = temp_path / 'h4' / 'submissions' / 'Pelt_Lucy'
     assert len(listdir(lucyDir)) == 1
     assert (lucyDir / 'LPelt_HW4.pdf').read_text() == 'newest'
 
 
-def test_unpack_duplicates_keep_oldest_only(temp_path, archive_file):
-    run_kodiak_unpack(temp_path, archive_file, 'h4', duplicates='oldest-only')
+def test_duplicates_keep_oldest_only(temp_path, archive_file):
+    run_kodiak_init(temp_path, archive_file, 'h4', duplicates='oldest-only')
     lucyDir = temp_path / 'h4' / 'submissions' / 'Pelt_Lucy'
     assert len(listdir(lucyDir)) == 1
     assert (lucyDir / 'LPelt_HW4.pdf').read_text() == 'oldest'

@@ -1,6 +1,6 @@
 import pathlib
 import shutil
-from typing import Dict, Callable, List, Iterable, Union, Tuple
+from typing import Dict, Callable, List, Iterable, Union, Tuple, cast
 from abc import ABC, abstractmethod
 from datetime import datetime
 import pickle
@@ -10,26 +10,13 @@ import time
 
 class Project:
     def __init__(self: 'Project', root: pathlib.Path) -> None:
-        self.root =                     root
-        self.private =                  root / '.kodiak'
-        self.sourceTargetMappingFile =  root / '.kodiak' / 'sourceTargetMapping'
-        self.temp =                     root / '.kodiak' / 'temp'
-        self.originalArchiveDir =       root / 'originalArchive'
-        self.originalSubmissionsDir =   root / 'originalSubmissions'
-        self.submissions =              root / 'submissions'
-        self.gradedSubmissions =        root / 'gradedSubmissions'
-        self.gradedArchive =            root / 'gradedArchive'
-
-        self.originalArchiveFile: Union[pathlib.Path, None] =  None
-        self.originalSubmissionFiles: List['SubmissionFile'] = []
-        self.gradedSubmissionFiles: List['SubmissionFile'] = []
-        self.studentDirectories: List[pathlib.Path] = []
-        self.sourceTargetMapping: List[Tuple[pathlib.Path, pathlib.Path]] = []
+        self.root = root
 
 
-    def importArchive(
+    def runInitCommand(
         self: 'Project', archive: pathlib.Path, importer: 'SubmissionImporter'
     ) -> None:
+        self.definePaths()
         self.initializeProjectDirectory()
         self.setOriginalArchiveFile(archive)
         self.copyArchiveIn(archive)
@@ -40,9 +27,26 @@ class Project:
         importer.importIntoProject(self)
         self.writeSourceTargetMapping()
 
+
+    def definePaths(self: 'Project') -> None:
+        self.private =                  self.root / '.kodiak'
+        self.sourceTargetMappingFile =  self.root / '.kodiak' / 'sourceTargetMapping'
+        self.temp =                     self.root / '.kodiak' / 'temp'
+        self.originalArchiveDir =       self.root / 'originalArchive'
+        self.originalSubmissionsDir =   self.root / 'originalSubmissions'
+        self.submissions =              self.root / 'submissions'
+        self.gradedSubmissions =        self.root / 'gradedSubmissions'
+        self.gradedArchive =            self.root / 'gradedArchive'
+
+        self.originalArchiveFile: Union[pathlib.Path, None] =  None
+        self.originalSubmissionFiles: List['SubmissionFile'] = []
+        self.gradedSubmissionFiles: List['SubmissionFile'] = []
+        self.studentDirectories: List[pathlib.Path] = []
+        self.sourceTargetMapping: List[Tuple[pathlib.Path, pathlib.Path]] = []
+
+
     def initializeProjectDirectory(self: 'Project') -> None:
         pathsToCreate = [
-            self.root,
             self.private,
             self.temp,
             self.originalArchiveDir,
@@ -52,7 +56,7 @@ class Project:
             self.gradedArchive,
         ]
         for path in pathsToCreate:
-            path.mkdir(parents=True)
+            path.mkdir(parents=True, exist_ok=True)
 
 
     def setOriginalArchiveFile(self: 'Project', external_archive: pathlib.Path) -> None:
@@ -81,6 +85,7 @@ class Project:
         for f in self.originalSubmissionFiles:
             f.adjustTimeStampsToMatchName()
 
+
     def makeStudentDirectories(self: 'Project') -> None:
         for f in self.originalSubmissionFiles:
             path = self.submissions / f.getStudentNameFromSubmissionFile()
@@ -98,6 +103,70 @@ class Project:
 
     def getSubmissionFilesNewestToOldest(self: 'Project'):
         return reversed(self.getSubmissionFilesOldestToNewest())
+
+
+    def runArchiveCommand(self: 'Project') -> None:
+        self.resolveRoot()
+        self.definePaths()
+        self.loadState()
+        self.copyOriginalSubmissionsToGradedSubmissions()
+        self.copySubmissionsToGradedSubmissions()
+        self.archiveGradedSubmissions()
+
+
+    def resolveRoot(self: 'Project') -> None:
+        d = self.root
+        d = d.resolve()
+        while '.kodiak' not in [f.name for f in d.iterdir()] and d != d.parent:
+            d = d.parent
+        if '.kodiak' not in [f.name for f in d.iterdir()]:
+            raise Exception(f'"{d}" is not a Kodiak project.')
+        self.root = d
+
+
+    def loadState(self: 'Project') -> None:
+        self.originalArchiveFile = next(self.originalArchiveDir.iterdir())
+        self.originalSubmissionFiles.extend(
+            SubmissionFile(self, f)
+            for f in self.originalSubmissionsDir.iterdir() if f.name != 'index.html'
+        )
+        self.studentDirectories.extend(self.submissions.iterdir())
+        self.sourceTargetMapping = pickle.load(self.sourceTargetMappingFile.open('rb'))
+
+
+    def copyOriginalSubmissionsToGradedSubmissions(self: 'Project') -> None:
+        for f in self.originalSubmissionsDir.iterdir():
+            shutil.copy2(f, self.gradedSubmissions)
+
+
+    def copySubmissionsToGradedSubmissions(self: 'Project') -> None:
+        sources = {}
+        for source, target in self.sourceTargetMapping:
+            sources[target] = source
+
+        for studentDir in self.submissions.iterdir():
+            for file in studentDir.iterdir():
+                original = sources[file]
+                if SubmissionFile(self, original).isArchive():
+                    shutil.make_archive(
+                        base_name=str(self.gradedSubmissions / original.stem),
+                        format=original.suffix[1:],
+                        root_dir=str(file),
+                    )
+                else:
+                    shutil.copy2(
+                        str(file),
+                        str(self.gradedSubmissions / original.name)
+                    )
+
+
+    def archiveGradedSubmissions(self: 'Project') -> None:
+        oaf = cast(pathlib.Path, self.originalArchiveFile)
+        shutil.make_archive(
+            base_name=str(self.gradedArchive/oaf.stem),
+            format='zip',
+            root_dir=str(self.gradedSubmissions)
+        )
 
 
 class SubmissionImporter:
