@@ -2,9 +2,76 @@
 
 Kodiak Tools provides a CLI to help instructors manage assignment archives for grading.
 
-## Getting Started
+## 1. A Quick Example
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+Download assignment archive from Kodiak. Then create a kodiak project as follows.
+
+```
+$ kodiak init h4 ~/Downloads/Homework\ 4\ Download\ May\ 25\,\ 2018\ 1118\ AM.zip
+```
+
+To grade, edit the files under the submissions subfolder of the project.
+
+```
+$ cd h4
+$ tree submissions/
+submissions/
+├── Brown_Charlie
+│   └── CharlieB_HW4
+│       ├── bar.txt
+│       ├── foo.txt
+│       └── subdir
+│           └── baz.txt
+└── Pelt_Lucy
+    ├── LPelt_HW4\ (1).txt
+    ├── LPelt_HW4\ (2).txt
+    └── LPelt_HW4.txt
+```
+
+When you're done grading, create an archive to upload to Kodiak.
+
+```
+$ kodiak archive
+$ ls gradedArchive/
+Homework 4 Download May 25, 2018 1118 AM.zip
+```
+
+Upload the archive in gradedArchive to Kodiak.
+
+
+## 2. Download and Install
+
+1. [Download latest release](https://github.com/StoneyJackson/kodiak-tools/releases).
+
+2. Rename it to kodiak, or kodiak.pyz.
+
+    ```
+    mv kodiak-tools-[VERSION].pyz kodiak
+    ```
+
+3. Make sure it is executable.
+
+    ```
+    chmod +x kodiak
+    ```
+
+4. Move it to a directory that is in your system's path.
+
+    ```
+    mv kodaik ~/bin
+    ```
+
+5. Start using kodiak. Start with help.
+
+    ```
+    kodiak --help
+    kodiak [COMMAND] --help
+    ```
+
+
+## 3. Getting Started as a Developer
+
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
 ### Prerequisites
 
@@ -15,45 +82,36 @@ command-line:
 2. pipenv
 3. GNU make
 
-### Installing
+### Installing the Development Environment
 
-From the command-line, clone this repository.
+1. Fork this repository and clone your fork.
 
-```
-git clone [url]
-```
 
-Change into the project directory.
+2. In the root of your clone, create a virtual environment for the project using Python 3.6 or higher.
 
-```
-cd kodiak-tools
-```
+    ```
+    pipenv --python 3.6
+    ```
 
-Create a virtual environment for the project using Python 3.6 or higher.
+3. Install all dependencies for development.
 
-```
-pipenv --python 3.6
-```
+    ```
+    pipenv install --dev
+    ```
 
-Install all dependencies for development.
-
-```
-pipenv install --dev
-```
-
-Install the kodiak command into your virtual environment. `-e` will install using
+4. Install the kodiak command into your virtual environment. `-e` will install using
 symlinks into src so that changes you make in src will be immediately reflected in the install.
 
-```
-pipenv install -e .
-```
+    ```
+    pipenv install -e .
+    ```
 
-Now enable the shell and give your development install of kodiak a test drive.
+5. Now enable the shell and give your development install of kodiak a test drive.
 
-```
-pipenv shell
-kodiak --help
-```
+    ```
+    pipenv shell
+    kodiak --help
+    ```
 
 ## Running the tests
 
@@ -75,37 +133,7 @@ To run tests manually check out the test rule in the Makefile.
 `make test` uses flake8 to check the style of code. Flake8's configuration is available in .flake8.
 
 
-## Deployment
-
-Download latest stable release from [URL]().
-
-```
-curl URL > file
-```
-
-Rename it to kodiak, or kodiak.pyz.
-
-```
-mv file kodiak
-```
-
-Make sure it is executable.
-
-```
-chmod +x kodiak
-```
-
-Move it to a directory that is in your system's path.
-
-```
-mv kodaik ~/bin
-```
-
-Start using kodiak. Start with help
-
-`kodiak --help`
-
-## Built With
+## 4. Built With
 
 * [click](http://click.pocoo.org/5/) - Framework for building command-line applications
 * [zipapp](https://docs.python.org/3/library/zipapp.html) - Packaging into standalone, executable zips
@@ -119,24 +147,24 @@ Start using kodiak. Start with help
 * [pipenv](https://docs.pipenv.org/) - Virtual environment and dependency manager
 * [GNU make](https://www.gnu.org/software/make/) - Developer task automation
 
-## Contributing
+## 5. Contributing
 
-Please read CONTRIBUTING.md for details on our code of conduct, and the process for submitting pull requests to us.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
-## Versioning
+## 6. Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags).
+We use [RomVer](http://blog.legacyteam.info/2015/12/romver-romantic-versioning/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags).
 
-## Authors
+## 7. Authors
 
 * [Stoney Jackson](https://github.com/StoneyJackson)
 
 See also the list of [contributors](https://github.com/StoneyJackson/kodiak-tools/contributors) who participated in this project.
 
-## License
+## 8. License
 
 This project is licensed under the GPLv3 - see the [LICENSE](LICENSE) file for details
 
-## Acknowledgments
+## 9. Acknowledgments
 
 * Hat tip to all the awesome development tools!
