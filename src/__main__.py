@@ -2,11 +2,11 @@
 This __main__.py is here to satisfy zipapp, which requires a __main__.py
 at the top level.
 '''
-from kodiak import __main__
+from kodiak import cli
 
 
 def main():
-    __main__.main()
+    cli.main()
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 # from kodiak.__main__ import pack
-from kodiak.__main__ import init, archive
+from kodiak.cli import init, archive
 from click.testing import CliRunner  # type: ignore  # noqa: F401
 import traceback
 

@@ -28,7 +28,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'kodiak = kodiak.__main__:main',
+            'kodiak = kodiak.cli:main',
         ]
     },
 )
