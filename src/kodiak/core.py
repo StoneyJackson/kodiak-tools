@@ -28,31 +28,29 @@ class Project:
 
 
     def definePaths(self: 'Project') -> None:
-        self.private =                  self.root / '.kodiak'
+        self.kodiakDir =                self.root / '.kodiak'
         self.sourceTargetMappingFile =  self.root / '.kodiak' / 'sourceTargetMapping'
-        self.temp =                     self.root / '.kodiak' / 'temp'
         self.originalArchiveDir =       self.root / 'originalArchive'
         self.originalSubmissionsDir =   self.root / 'originalSubmissions'
-        self.submissions =              self.root / 'submissions'
-        self.gradedSubmissions =        self.root / 'gradedSubmissions'
-        self.gradedArchive =            self.root / 'gradedArchive'
+        self.submissionsDir =           self.root / 'submissions'
+        self.gradedSubmissionsDir =     self.root / 'gradedSubmissions'
+        self.gradedArchiveDir =         self.root / 'gradedArchive'
 
         self.originalArchiveFile: typing.Union[pathlib.Path, None] =  None
         self.originalSubmissionFiles: typing.List['SubmissionFile'] = []
         self.gradedSubmissionFiles: typing.List['SubmissionFile'] = []
-        self.studentDirectories: typing.List[pathlib.Path] = []
+        self.studentDirs: typing.List[pathlib.Path] = []
         self.sourceTargetMapping: typing.List[typing.Tuple[pathlib.Path, pathlib.Path]] = []
 
 
     def initializeProjectDirectory(self: 'Project') -> None:
         pathsToCreate = [
-            self.private,
-            self.temp,
+            self.kodiakDir,
             self.originalArchiveDir,
             self.originalSubmissionsDir,
-            self.submissions,
-            self.gradedSubmissions,
-            self.gradedArchive,
+            self.submissionsDir,
+            self.gradedSubmissionsDir,
+            self.gradedArchiveDir,
         ]
         for path in pathsToCreate:
             path.mkdir(parents=True, exist_ok=True)
@@ -87,9 +85,9 @@ class Project:
 
     def makeStudentDirectories(self: 'Project') -> None:
         for f in self.originalSubmissionFiles:
-            path = self.submissions / f.getStudentNameFromSubmissionFile()
+            path = self.submissionsDir / f.getStudentDirectoryName()
             path.mkdir(parents=True, exist_ok=True)
-            self.studentDirectories.append(path)
+            self.studentDirs.append(path)
 
 
     def writeSourceTargetMapping(self: 'Project') -> None:
@@ -129,13 +127,13 @@ class Project:
             SubmissionFile(self, f)
             for f in self.originalSubmissionsDir.iterdir() if f.name != 'index.html'
         )
-        self.studentDirectories.extend(self.submissions.iterdir())
+        self.studentDirs.extend(self.submissionsDir.iterdir())
         self.sourceTargetMapping = pickle.load(self.sourceTargetMappingFile.open('rb'))
 
 
     def copyOriginalSubmissionsToGradedSubmissions(self: 'Project') -> None:
         for f in self.originalSubmissionsDir.iterdir():
-            shutil.copy2(f, self.gradedSubmissions)
+            shutil.copy2(f, self.gradedSubmissionsDir)
 
 
     def copySubmissionsToGradedSubmissions(self: 'Project') -> None:
@@ -143,28 +141,28 @@ class Project:
         for source, target in self.sourceTargetMapping:
             sources[target] = source
 
-        for studentDir in self.submissions.iterdir():
+        for studentDir in self.submissionsDir.iterdir():
             for file in studentDir.iterdir():
                 original = sources[file]
                 if SubmissionFile(self, original).isArchive():
                     shutil.make_archive(
-                        base_name=str(self.gradedSubmissions / original.stem),
+                        base_name=str(self.gradedSubmissionsDir / original.stem),
                         format=original.suffix[1:],
                         root_dir=str(file),
                     )
                 else:
                     shutil.copy2(
                         str(file),
-                        str(self.gradedSubmissions / original.name)
+                        str(self.gradedSubmissionsDir / original.name)
                     )
 
 
     def archiveGradedSubmissions(self: 'Project') -> None:
         oaf = typing.cast(pathlib.Path, self.originalArchiveFile)
         shutil.make_archive(
-            base_name=str(self.gradedArchive/oaf.stem),
+            base_name=str(self.gradedArchiveDir/oaf.stem),
             format='zip',
-            root_dir=str(self.gradedSubmissions)
+            root_dir=str(self.gradedSubmissionsDir)
         )
 
 
@@ -193,7 +191,7 @@ def getSubmissionFilesNewestToOldest(project: Project) -> typing.Iterable['Submi
 
 
 def processIfDoesNotExist(file: 'SubmissionFile') -> bool:
-    return not file.getUnpackedFilePath().exists()
+    return not file.getPathUnderSubmissionsDir().exists()
 
 
 def processUnconditionally(file: 'SubmissionFile') -> bool:
@@ -219,11 +217,11 @@ class SubmissionFile:
         self.project = project
         self.path = path
         self.suffix = path.suffix
-        self.parseIntoAttributes(path.name)
+        self.parse(path.name)
         self.datetime = makeDatetime(self.datetime_str)
         self.datetime_total_seconds = calculateTotalSeconds(self.datetime)
 
-    def parseIntoAttributes(self: 'SubmissionFile', name: str) -> None:
+    def parse(self: 'SubmissionFile', name: str) -> None:
         parts = name.split(' - ', maxsplit=3)
         first, last = parts[1].split(' ')
         self.student_submission_id = parts[0]
@@ -236,15 +234,15 @@ class SubmissionFile:
         s = self.datetime_total_seconds
         os.utime(str(self.path), (s, s))
 
-    def getUnpackedFilePath(self: 'SubmissionFile'):
-        target_parent_path = self.project.submissions
-        name = self.getStudentNameFromSubmissionFile()
+    def getPathUnderSubmissionsDir(self: 'SubmissionFile'):
+        target_parent_path = self.project.submissionsDir
+        name = self.getStudentDirectoryName()
         path = target_parent_path / name / self.submitted_filename
         if self.isArchive():
             path = path.with_name(path.stem)
         return path
 
-    def getStudentNameFromSubmissionFile(self: 'SubmissionFile'):
+    def getStudentDirectoryName(self: 'SubmissionFile'):
         return f'{self.student_last_name}_{self.student_first_name}'
 
     def isArchive(self: 'SubmissionFile'):
@@ -263,7 +261,7 @@ class SubmissionFile:
         shutil.copy2(str(self.path), str(target))
 
     def importIntoProject(self: 'SubmissionFile'):
-        target = append_number_to_make_unique(self.getUnpackedFilePath())
+        target = append_number_to_make_unique(self.getPathUnderSubmissionsDir())
         self.unpackTo(target)
         return (self.path, target)
 
