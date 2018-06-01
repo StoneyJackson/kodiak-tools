@@ -1,7 +1,9 @@
+import pathlib
+import typing
 from tests.functional import runners
 
 
-def test_no_opts(temp_path, archive_file):
+def test_no_opts(temp_path: pathlib.Path, archive_file: pathlib.Path) -> None:
     runners.run_kodiak_init(temp_path, archive_file, 'h4', duplicates=None)
     h4 = temp_path / 'h4'
     subs = h4/'submissions'
@@ -17,7 +19,7 @@ def test_no_opts(temp_path, archive_file):
     assert lpelt_hw4_pdf_2.read_text() == 'oldest'
 
 
-def test_duplicates_number_newest(temp_path, archive_file):
+def test_duplicates_number_newest(temp_path: pathlib.Path, archive_file: pathlib.Path) -> None:
     runners.run_kodiak_init(temp_path, archive_file, 'h4', duplicates='number-newer')
     lucy_path = temp_path / 'h4' / 'submissions' / 'Pelt_Lucy'
     lpelt_hw4_pdf = lucy_path / 'LPelt_HW4.pdf'
@@ -26,7 +28,7 @@ def test_duplicates_number_newest(temp_path, archive_file):
     assert lpelt_hw4_pdf_2.read_text() == 'newest'
 
 
-def test_duplicates_number_older(temp_path, archive_file):
+def test_duplicates_number_older(temp_path: pathlib.Path, archive_file: pathlib.Path) -> None:
     runners.run_kodiak_init(temp_path, archive_file, 'h4', duplicates='number-older')
     lucy_path = temp_path / 'h4' / 'submissions' / 'Pelt_Lucy'
     lpelt_hw4_pdf = lucy_path / 'LPelt_HW4.pdf'
@@ -35,19 +37,19 @@ def test_duplicates_number_older(temp_path, archive_file):
     assert lpelt_hw4_pdf_2.read_text() == 'oldest'
 
 
-def test_duplicates_keep_newest_only(temp_path, archive_file):
+def test_duplicates_keep_newest_only(temp_path: pathlib.Path, archive_file: pathlib.Path) -> None:
     runners.run_kodiak_init(temp_path, archive_file, 'h4', duplicates='newest-only')
     lucyDir = temp_path / 'h4' / 'submissions' / 'Pelt_Lucy'
     assert len(listdir(lucyDir)) == 1
     assert (lucyDir / 'LPelt_HW4.pdf').read_text() == 'newest'
 
 
-def test_duplicates_keep_oldest_only(temp_path, archive_file):
+def test_duplicates_keep_oldest_only(temp_path: pathlib.Path, archive_file: pathlib.Path) -> None:
     runners.run_kodiak_init(temp_path, archive_file, 'h4', duplicates='oldest-only')
     lucyDir = temp_path / 'h4' / 'submissions' / 'Pelt_Lucy'
     assert len(listdir(lucyDir)) == 1
     assert (lucyDir / 'LPelt_HW4.pdf').read_text() == 'oldest'
 
 
-def listdir(path):
+def listdir(path: pathlib.Path) -> typing.List[str]:
     return sorted([f.name for f in path.iterdir()])

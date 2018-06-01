@@ -1,32 +1,39 @@
 import traceback
+import pathlib
+import typing
 
-import click.testing  # type: ignore
+from click.testing import CliRunner, Result  # type: ignore
 
 import kodiak.cli
 
 
-def run_kodiak_init(temp_path, archive_file, target_dir, duplicates=None):
+def run_kodiak_init(
+        temp_path: pathlib.Path,
+        archive_file: pathlib.Path,
+        target_dir: str,
+        duplicates: typing.Optional[str]=None
+) -> None:
     args = []
-    if duplicates:
+    if duplicates is not None:
         args.append('--duplicates='+duplicates)
-    args.extend([str(temp_path / target_dir), archive_file])
-    result = click.testing.CliRunner().invoke(
+    args.extend([str(temp_path / target_dir), str(archive_file)])
+    result = CliRunner().invoke(
         kodiak.cli.init,
         args
     )
     checkCliRunnerErrors(result)
 
 
-def run_kodiak_archive(temp_path, target_dir):
+def run_kodiak_archive(temp_path: pathlib.Path, target_dir: str) -> None:
     project_root = temp_path / target_dir
-    result = click.testing.CliRunner().invoke(
+    result = CliRunner().invoke(
         kodiak.cli.archive,
         [f'--project-root={project_root}']
     )
     checkCliRunnerErrors(result)
 
 
-def checkCliRunnerErrors(result):
+def checkCliRunnerErrors(result: Result) -> None:  # type: ignore
     print(result.output)
     if result.exit_code != 0:
         if result.exception:

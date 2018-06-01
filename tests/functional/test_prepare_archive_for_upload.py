@@ -1,9 +1,11 @@
+import pathlib
+import typing
 import shutil
 
 from tests.functional import runners
 
 
-def test_pack_from_oldest_only(temp_path, archive_file):
+def test_pack_from_oldest_only(temp_path: pathlib.Path, archive_file: pathlib.Path) -> None:
     runners.run_kodiak_init(temp_path, archive_file, 'h4', duplicates='number-older')
 
     pelt = temp_path / 'h4' / 'submissions' / 'Pelt_Lucy' / 'LPelt_HW4.pdf'
@@ -20,5 +22,5 @@ def test_pack_from_oldest_only(temp_path, archive_file):
     assert pelt.read_text() == 'feedback'
 
 
-def listdir(path):
+def listdir(path: pathlib.Path) -> typing.List[str]:
     return sorted([f.name for f in path.iterdir()])

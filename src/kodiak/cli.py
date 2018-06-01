@@ -12,7 +12,7 @@ if not (sys.version_info.major == 3 and sys.version_info.minor >= 6):
 
 @click.group()
 @click.version_option(kodiak.__VERSION__)
-def main():
+def main() -> None:
     pass
 
 
@@ -44,7 +44,7 @@ def main():
     default='number-older',
     help='How to handle duplicate submissions.'
 )
-def init(directory, archive, duplicates):
+def init(directory: str, archive: str, duplicates: str) -> None:
     '''Create project in DIRECTORY from ARCHIVE.
 
 OVERVIEW
@@ -123,7 +123,7 @@ and run kodiak again specifying your desired strategy. E.g.,
     help='Root of project to pack.',
     default='.',
 )
-def archive(project_root):
+def archive(project_root: str) -> None:
     '''Build an archive for Kodiak.
 
 Archive graded and ungraded submissions into a file suitable for upload to Kodiak.
@@ -135,7 +135,7 @@ upload.
 
 
 @main.command()
-def formats():
+def formats() -> None:
     '''List supported archive formats.
 
 Might include these on your syllabus.

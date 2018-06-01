@@ -1,11 +1,12 @@
-import pathlib  # type: ignore
+import pathlib
 import shutil
+import typing
 
 import pytest  # type: ignore
 
 
 @pytest.fixture
-def temp_path():
+def temp_path() -> typing.Generator[pathlib.Path, None, None]:
     t = pathlib.Path(__file__).parent / 'temp'
     t.mkdir(exist_ok=True)
     yield t
@@ -13,7 +14,7 @@ def temp_path():
 
 
 @pytest.fixture
-def archive_file(temp_path):
+def archive_file(temp_path: pathlib.Path) -> str:
     archive_path = generate_homework_archive(
         temp_path,
         'Homework 4 Download May 25, 2018 1118 AM',
@@ -28,8 +29,12 @@ def archive_file(temp_path):
     return str(archive_path)
 
 
-def generate_homework_archive(temp_path, target_path, submission_descs):
-    target_path = temp_path / target_path
+def generate_homework_archive(
+    temp_path: pathlib.Path,
+    target_name_str: str,
+    submission_descs: typing.List[typing.Tuple[str, str, str]]
+) -> pathlib.Path:
+    target_path = temp_path / target_name_str
     for name, type, content in submission_descs:
         if type == 'file':
             mkfile(target_path/name).write_text(content)
@@ -40,7 +45,10 @@ def generate_homework_archive(temp_path, target_path, submission_descs):
     return archive
 
 
-def mk_archive_submission(temp_path, target_path):
+def mk_archive_submission(
+        temp_path: pathlib.Path,
+        target_path: pathlib.Path
+) -> pathlib.Path:
     cb_path = mkdir(temp_path/'cb')
     mkfile(cb_path/'x')
     mkfile(cb_path/'y')
@@ -51,24 +59,24 @@ def mk_archive_submission(temp_path, target_path):
     return target_path
 
 
-def mk_file_submission(target_path):
+def mk_file_submission(target_path: pathlib.Path) -> pathlib.Path:
     return mkfile(target_path)
 
 
-def mkdir(path):
+def mkdir(path: pathlib.Path) -> pathlib.Path:
     path.mkdir()
     return path
 
 
-def mkfile(path):
+def mkfile(path: pathlib.Path) -> pathlib.Path:
     path.touch()
     return path
 
 
-def mkarchive(dest_path, src_path):
+def mkarchive(dest_path: pathlib.Path, src_path: pathlib.Path) -> pathlib.Path:
     shutil.make_archive(str(dest_path), 'zip', str(src_path))
     return dest_path.with_suffix('.zip')
 
 
-def rmtree(path):
+def rmtree(path: pathlib.Path) -> None:
     shutil.rmtree(path)

@@ -20,7 +20,7 @@ clean:
 	rm -rf dist
 
 test:
-	PYTHONPATH=./src MYPYPATH=./src pytest $(PYTEST_OPTS) tests
+	PYTHONPATH=./src pytest $(PYTEST_OPTS) tests
 
 release:
 	git checkout master

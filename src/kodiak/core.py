@@ -94,11 +94,11 @@ class Project:
         pickle.dump(self.sourceTargetMapping, self.sourceTargetMappingFile.open('wb'))
 
 
-    def getSubmissionFilesOldestToNewest(self: 'Project'):
-        return sorted(self.originalSubmissionFiles, key=lambda s: s.datetime)
+    def getSubmissionFilesOldestToNewest(self: 'Project') -> typing.List['SubmissionFile']:
+        return sorted(self.originalSubmissionFiles, key=getDatetimeFromSubmissionFile)
 
 
-    def getSubmissionFilesNewestToOldest(self: 'Project'):
+    def getSubmissionFilesNewestToOldest(self: 'Project') -> typing.Iterator['SubmissionFile']:
         return reversed(self.getSubmissionFilesOldestToNewest())
 
 
@@ -234,7 +234,7 @@ class SubmissionFile:
         s = self.datetime_total_seconds
         os.utime(str(self.path), (s, s))
 
-    def getPathUnderSubmissionsDir(self: 'SubmissionFile'):
+    def getPathUnderSubmissionsDir(self: 'SubmissionFile') -> pathlib.Path:
         target_parent_path = self.project.submissionsDir
         name = self.getStudentDirectoryName()
         path = target_parent_path / name / self.submitted_filename
@@ -242,28 +242,32 @@ class SubmissionFile:
             path = path.with_name(path.stem)
         return path
 
-    def getStudentDirectoryName(self: 'SubmissionFile'):
+    def getStudentDirectoryName(self: 'SubmissionFile') -> str:
         return f'{self.student_last_name}_{self.student_first_name}'
 
-    def isArchive(self: 'SubmissionFile'):
+    def isArchive(self: 'SubmissionFile') -> bool:
         return self.path.suffix in get_supported_archive_extensions()
 
-    def unpackTo(self: 'SubmissionFile', target):
+    def unpackTo(self: 'SubmissionFile', target: pathlib.Path) -> None:
         if self.isArchive():
             self.unpackArchiveTo(target)
         else:
             self.unpackFileTo(target)
 
-    def unpackArchiveTo(self: 'SubmissionFile', target):
+    def unpackArchiveTo(self: 'SubmissionFile', target: pathlib.Path) -> None:
         shutil.unpack_archive(str(self.path), str(target))
 
-    def unpackFileTo(self: 'SubmissionFile', target):
+    def unpackFileTo(self: 'SubmissionFile', target: pathlib.Path) -> None:
         shutil.copy2(str(self.path), str(target))
 
-    def importIntoProject(self: 'SubmissionFile'):
+    def importIntoProject(self: 'SubmissionFile') -> typing.Tuple[pathlib.Path, pathlib.Path]:
         target = append_number_to_make_unique(self.getPathUnderSubmissionsDir())
         self.unpackTo(target)
         return (self.path, target)
+
+
+def getDatetimeFromSubmissionFile(file: SubmissionFile) -> datetime.datetime:
+    return file.datetime
 
 
 def makeDatetime(s: str) -> datetime.datetime:
@@ -279,11 +283,11 @@ def calculateTotalSeconds(dt: datetime.datetime) -> float:
     return (dt - datetime.datetime(1970, 1, 1)).total_seconds() + time.timezone
 
 
-def get_supported_archive_extensions():
+def get_supported_archive_extensions() -> typing.List[str]:
     return [extension for disc in shutil.get_unpack_formats() for extension in disc[1]]
 
 
-def append_number_to_make_unique(file):
+def append_number_to_make_unique(file: pathlib.Path) -> pathlib.Path:
     i = 1
     if file.exists():
         file = file.with_name(file.stem + f' ({i})' + file.suffix)
