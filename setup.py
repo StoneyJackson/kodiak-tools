@@ -1,5 +1,5 @@
+import setuptools  # type: ignore
 import sys
-from setuptools import setup, find_packages  # type: ignore
 
 
 if not (sys.version_info.major == 3 and sys.version_info.minor >= 6):
@@ -14,12 +14,12 @@ with open("VERSION", "r") as fh:
     version = fh.read()
 
 
-setup(
+setuptools.setup(
     name='Kodiak Tools',
     version=version,
     license='GPLv3',
     long_description=long_description,
-    packages=find_packages('src'),
+    packages=setuptools.find_packages('src'),
     package_dir={
         '': 'src',
     },

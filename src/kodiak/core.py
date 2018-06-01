@@ -1,11 +1,10 @@
-import pathlib
-import shutil
-from typing import Dict, Callable, List, Iterable, Union, Tuple, cast
-from abc import ABC, abstractmethod
-from datetime import datetime
-import pickle
+import datetime
 import os
+import pathlib
+import pickle
+import shutil
 import time
+import typing
 
 
 class Project:
@@ -38,11 +37,11 @@ class Project:
         self.gradedSubmissions =        self.root / 'gradedSubmissions'
         self.gradedArchive =            self.root / 'gradedArchive'
 
-        self.originalArchiveFile: Union[pathlib.Path, None] =  None
-        self.originalSubmissionFiles: List['SubmissionFile'] = []
-        self.gradedSubmissionFiles: List['SubmissionFile'] = []
-        self.studentDirectories: List[pathlib.Path] = []
-        self.sourceTargetMapping: List[Tuple[pathlib.Path, pathlib.Path]] = []
+        self.originalArchiveFile: typing.Union[pathlib.Path, None] =  None
+        self.originalSubmissionFiles: typing.List['SubmissionFile'] = []
+        self.gradedSubmissionFiles: typing.List['SubmissionFile'] = []
+        self.studentDirectories: typing.List[pathlib.Path] = []
+        self.sourceTargetMapping: typing.List[typing.Tuple[pathlib.Path, pathlib.Path]] = []
 
 
     def initializeProjectDirectory(self: 'Project') -> None:
@@ -161,7 +160,7 @@ class Project:
 
 
     def archiveGradedSubmissions(self: 'Project') -> None:
-        oaf = cast(pathlib.Path, self.originalArchiveFile)
+        oaf = typing.cast(pathlib.Path, self.originalArchiveFile)
         shutil.make_archive(
             base_name=str(self.gradedArchive/oaf.stem),
             format='zip',
@@ -172,8 +171,8 @@ class Project:
 class SubmissionImporter:
     def __init__(
         self: 'SubmissionImporter',
-        getSubmissionFiles: Callable[[Project], Iterable['SubmissionFile']],
-        shouldImport: Callable[['SubmissionFile'], bool]
+        getSubmissionFiles: typing.Callable[[Project], typing.Iterable['SubmissionFile']],
+        shouldImport: typing.Callable[['SubmissionFile'], bool]
     ) -> None:
         self.getSubmissionFiles = getSubmissionFiles
         self.shouldImport = shouldImport
@@ -185,11 +184,11 @@ class SubmissionImporter:
                 project.sourceTargetMapping.append( (source, target) )
 
 
-def getSubmissionFilesOldestToNewest(project: Project) -> Iterable['SubmissionFile']:
+def getSubmissionFilesOldestToNewest(project: Project) -> typing.Iterable['SubmissionFile']:
     return project.getSubmissionFilesOldestToNewest()
 
 
-def getSubmissionFilesNewestToOldest(project: Project) -> Iterable['SubmissionFile']:
+def getSubmissionFilesNewestToOldest(project: Project) -> typing.Iterable['SubmissionFile']:
     return project.getSubmissionFilesNewestToOldest()
 
 
@@ -269,17 +268,17 @@ class SubmissionFile:
         return (self.path, target)
 
 
-def makeDatetime(s: str) -> datetime:
+def makeDatetime(s: str) -> datetime.datetime:
     # Kodiak runs together hours and minutes. Split them up so that
-    # we can use strptime to parse and create a datetime object.
+    # we can use strptime to parse and create a datetime.datetime object.
     minutes = s[-5:-3]
     hours = s[-7:-5]
     s = s[:-7] + hours + ' ' + minutes + s[-3:]
-    return datetime.strptime(s, '%b %d, %Y %I %M %p')
+    return datetime.datetime.strptime(s, '%b %d, %Y %I %M %p')
 
 
-def calculateTotalSeconds(dt: datetime) -> float:
-    return (dt - datetime(1970, 1, 1)).total_seconds() + time.timezone
+def calculateTotalSeconds(dt: datetime.datetime) -> float:
+    return (dt - datetime.datetime(1970, 1, 1)).total_seconds() + time.timezone
 
 
 def get_supported_archive_extensions():

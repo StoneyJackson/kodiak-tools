@@ -1,8 +1,9 @@
-import sys
-import click
 import pathlib
-from kodiak import core
-import kodiak
+import sys
+
+import click
+
+import kodiak.core
 
 
 if not (sys.version_info.major == 3 and sys.version_info.minor >= 6):
@@ -76,10 +77,10 @@ newest-only
     projectDirectory = pathlib.Path(directory)
 
     importer = {
-        'number-newer': core.IMPORT_NUMBERING_NEWER,
-        'number-older': core.IMPORT_NUMBERING_OLDER,
-        'oldest-only': core.IMPORT_OLDEST_ONLY,
-        'newest-only': core.IMPORT_NEWEST_ONLY
+        'number-newer': kodiak.core.IMPORT_NUMBERING_NEWER,
+        'number-older': kodiak.core.IMPORT_NUMBERING_OLDER,
+        'oldest-only': kodiak.core.IMPORT_OLDEST_ONLY,
+        'newest-only': kodiak.core.IMPORT_NEWEST_ONLY
     }[duplicates]
 
     if projectDirectory.exists():
@@ -104,7 +105,7 @@ and run kodiak again specifying your desired strategy. E.g.,
         "{projectDirectory}"
 ''')
 
-    core.Project(projectDirectory).runInitCommand(archiveFile, importer)
+    kodiak.core.Project(projectDirectory).runInitCommand(archiveFile, importer)
     print('Done.')
 
 
@@ -130,7 +131,7 @@ The archive file will be placed in [project_root]/gradedArchive. The files in th
 will be placed in [project_root]/gradedSubmissions so you may inspect what you are about to
 upload.
     '''
-    core.Project(pathlib.Path(project_root)).runArchiveCommand()
+    kodiak.core.Project(pathlib.Path(project_root)).runArchiveCommand()
 
 
 @main.command()
@@ -144,7 +145,7 @@ Might include these on your syllabus.
 kodiak-tools supports the archive formats listed below. Let your students know.
     ''')
 
-    for format in core.get_supported_archive_extensions():
+    for format in kodiak.core.get_supported_archive_extensions():
         click.echo(format)
 
     click.echo('''

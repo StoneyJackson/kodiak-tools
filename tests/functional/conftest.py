@@ -1,6 +1,7 @@
 import pathlib  # type: ignore
-import pytest  # type: ignore
 import shutil
+
+import pytest  # type: ignore
 
 
 @pytest.fixture
