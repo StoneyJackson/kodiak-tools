@@ -2,9 +2,7 @@ import sys
 import click
 import pathlib
 from kodiak import core
-
-
-__version__='1.0.2-dev'
+import kodiak
 
 
 if not (sys.version_info.major == 3 and sys.version_info.minor >= 6):
@@ -12,7 +10,7 @@ if not (sys.version_info.major == 3 and sys.version_info.minor >= 6):
 
 
 @click.group()
-@click.version_option(__version__)
+@click.version_option(kodiak.__VERSION__)
 def main():
     pass
 
