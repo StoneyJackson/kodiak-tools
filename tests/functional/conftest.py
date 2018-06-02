@@ -59,10 +59,6 @@ def mk_archive_submission(
     return target_path
 
 
-def mk_file_submission(target_path: pathlib.Path) -> pathlib.Path:
-    return mkfile(target_path)
-
-
 def mkdir(path: pathlib.Path) -> pathlib.Path:
     path.mkdir()
     return path

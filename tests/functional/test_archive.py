@@ -1,5 +1,4 @@
 import pathlib
-import typing
 import shutil
 
 from tests.functional import runners
@@ -20,7 +19,3 @@ def test_archive(temp_path: pathlib.Path, archive_file: pathlib.Path) -> None:
     shutil.unpack_archive(str(new_archive), str(h4_1))
     pelt = h4_1 / '11824-66708 - Lucy Pelt - Feb 9, 2017 1017 PM - LPelt_HW4.pdf'
     assert pelt.read_text() == 'feedback'
-
-
-def listdir(path: pathlib.Path) -> typing.List[str]:
-    return sorted([f.name for f in path.iterdir()])

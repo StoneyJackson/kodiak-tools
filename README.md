@@ -119,40 +119,35 @@ symlinks into src so that changes you make in src will be immediately reflected 
 
 ### Running the tests
 
-Build and run the unit and functional tests using make as follows.
+Run all tests (including style and type checking) as follows.
 
 ```
-make clean ; make test
+make test
 ```
-
-To run tests manually check out the test rule in the Makefile.
-
-### Static type checking
-
-`make test` uses mypy to perform static type checking.
-
-
-### Automated style tests
-
-`make test` uses flake8 to check the style of code. Flake8's configuration is available in .flake8.
 
 ### Making a release
 
-`make release`
+This requires `hub` to be installed. Basically this will bumpversions
+
+```
+make release
+```
 
 ## 5. Built With
 
+* [bumpversion](https://github.com/peritus/bumpversion)
 * [click](http://click.pocoo.org/5/) - Framework for building command-line applications
-* [zipapp](https://docs.python.org/3/library/zipapp.html) - Packaging into standalone, executable zips
-* [pytest](https://docs.pytest.org/en/latest/) - Unit test framework
 * [coverage](https://coverage.readthedocs.io/en/coverage-4.5.1/) - Test coverage reports
-* [pytest-cov](https://pytest-cov.readthedocs.io/en/latest/) - pytest coverage plugin
+* [hub](https://github.com/github/hub)
 * [flake8](http://flake8.pycqa.org/en/latest/) - Automated style tests
-* [pytest-flake8](https://github.com/tholo/pytest-flake8) - pytest flake8 plugin
+* [GNU make](https://www.gnu.org/software/make/) - Developer task automation
 * [mypy](http://mypy-lang.org/) - Static type checking
 * [pytest-mypy](https://github.com/dbader/pytest-mypy) - pytest mypy plugin
 * [pipenv](https://docs.pipenv.org/) - Virtual environment and dependency manager
-* [GNU make](https://www.gnu.org/software/make/) - Developer task automation
+* [pytest](https://docs.pytest.org/en/latest/) - Unit test framework
+* [pytest-cov](https://pytest-cov.readthedocs.io/en/latest/) - pytest coverage plugin
+* [tox](https://tox.readthedocs.io/en/latest/)
+* [zipapp](https://docs.python.org/3/library/zipapp.html) - Packaging into standalone, executable zips
 
 ## 6. Contributing
 
