@@ -10,13 +10,9 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 
-with open("VERSION", "r") as fh:
-    version = fh.read()
-
-
 setuptools.setup(
     name='Kodiak Tools',
-    version=version,
+    version='1.0.2-dev',
     license='GPLv3',
     long_description=long_description,
     packages=setuptools.find_packages('src'),

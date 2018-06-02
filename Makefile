@@ -20,7 +20,7 @@ clean:
 	rm -rf dist
 
 test:
-	PYTHONPATH=./src pytest $(PYTEST_OPTS) tests
+	tox
 
 release:
 	git checkout master

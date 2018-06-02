@@ -5,7 +5,7 @@ at the top level.
 from kodiak import cli
 
 
-def main():
+def main() -> None:
     cli.main()
 
 

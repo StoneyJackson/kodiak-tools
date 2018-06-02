@@ -11,7 +11,6 @@ class Project:
     def __init__(self: 'Project', root: pathlib.Path) -> None:
         self.root = root
 
-
     def runInitCommand(
         self: 'Project', archive: pathlib.Path, importer: 'SubmissionImporter'
     ) -> None:
@@ -26,22 +25,20 @@ class Project:
         importer.importIntoProject(self)
         self.writeSourceTargetMapping()
 
-
     def definePaths(self: 'Project') -> None:
-        self.kodiakDir =                self.root / '.kodiak'
-        self.sourceTargetMappingFile =  self.root / '.kodiak' / 'sourceTargetMapping'
-        self.originalArchiveDir =       self.root / 'originalArchive'
-        self.originalSubmissionsDir =   self.root / 'originalSubmissions'
-        self.submissionsDir =           self.root / 'submissions'
-        self.gradedSubmissionsDir =     self.root / 'gradedSubmissions'
-        self.gradedArchiveDir =         self.root / 'gradedArchive'
+        self.kodiakDir = self.root / '.kodiak'
+        self.sourceTargetMappingFile = self.root / '.kodiak' / 'sourceTargetMapping'
+        self.originalArchiveDir = self.root / 'originalArchive'
+        self.originalSubmissionsDir = self.root / 'originalSubmissions'
+        self.submissionsDir = self.root / 'submissions'
+        self.gradedSubmissionsDir = self.root / 'gradedSubmissions'
+        self.gradedArchiveDir = self.root / 'gradedArchive'
 
-        self.originalArchiveFile: typing.Union[pathlib.Path, None] =  None
+        self.originalArchiveFile: typing.Union[pathlib.Path, None] = None
         self.originalSubmissionFiles: typing.List['SubmissionFile'] = []
         self.gradedSubmissionFiles: typing.List['SubmissionFile'] = []
         self.studentDirs: typing.List[pathlib.Path] = []
         self.sourceTargetMapping: typing.List[typing.Tuple[pathlib.Path, pathlib.Path]] = []
-
 
     def initializeProjectDirectory(self: 'Project') -> None:
         pathsToCreate = [
@@ -55,14 +52,11 @@ class Project:
         for path in pathsToCreate:
             path.mkdir(parents=True, exist_ok=True)
 
-
     def setOriginalArchiveFile(self: 'Project', external_archive: pathlib.Path) -> None:
         self.originalArchiveFile = self.originalArchiveDir / external_archive.name
 
-
     def copyArchiveIn(self: 'Project', archive: pathlib.Path) -> None:
         shutil.copy2(archive, self.originalArchiveDir)
-
 
     def extractArchive(self: 'Project') -> None:
         shutil.unpack_archive(
@@ -71,17 +65,14 @@ class Project:
             format='zip'
         )
 
-
     def loadSubmissionFiles(self: 'Project') -> None:
         for f in self.originalSubmissionsDir.iterdir():
             if f.name != 'index.html':
                 self.originalSubmissionFiles.append(SubmissionFile(self, f))
 
-
     def adjustTimeStampsOnSubmissionFilesToMatchNames(self: 'Project') -> None:
         for f in self.originalSubmissionFiles:
             f.adjustTimeStampsToMatchName()
-
 
     def makeStudentDirectories(self: 'Project') -> None:
         for f in self.originalSubmissionFiles:
@@ -89,18 +80,14 @@ class Project:
             path.mkdir(parents=True, exist_ok=True)
             self.studentDirs.append(path)
 
-
     def writeSourceTargetMapping(self: 'Project') -> None:
         pickle.dump(self.sourceTargetMapping, self.sourceTargetMappingFile.open('wb'))
-
 
     def getSubmissionFilesOldestToNewest(self: 'Project') -> typing.List['SubmissionFile']:
         return sorted(self.originalSubmissionFiles, key=getDatetimeFromSubmissionFile)
 
-
     def getSubmissionFilesNewestToOldest(self: 'Project') -> typing.Iterator['SubmissionFile']:
         return reversed(self.getSubmissionFilesOldestToNewest())
-
 
     def runArchiveCommand(self: 'Project') -> None:
         self.resolveRoot()
@@ -109,7 +96,6 @@ class Project:
         self.copyOriginalSubmissionsToGradedSubmissions()
         self.copySubmissionsToGradedSubmissions()
         self.archiveGradedSubmissions()
-
 
     def resolveRoot(self: 'Project') -> None:
         d = self.root
@@ -120,7 +106,6 @@ class Project:
             raise Exception(f'"{d}" is not a Kodiak project.')
         self.root = d
 
-
     def loadState(self: 'Project') -> None:
         self.originalArchiveFile = next(self.originalArchiveDir.iterdir())
         self.originalSubmissionFiles.extend(
@@ -130,11 +115,9 @@ class Project:
         self.studentDirs.extend(self.submissionsDir.iterdir())
         self.sourceTargetMapping = pickle.load(self.sourceTargetMappingFile.open('rb'))
 
-
     def copyOriginalSubmissionsToGradedSubmissions(self: 'Project') -> None:
         for f in self.originalSubmissionsDir.iterdir():
             shutil.copy2(f, self.gradedSubmissionsDir)
-
 
     def copySubmissionsToGradedSubmissions(self: 'Project') -> None:
         sources = {}
@@ -155,7 +138,6 @@ class Project:
                         str(file),
                         str(self.gradedSubmissionsDir / original.name)
                     )
-
 
     def archiveGradedSubmissions(self: 'Project') -> None:
         oaf = typing.cast(pathlib.Path, self.originalArchiveFile)
@@ -179,7 +161,7 @@ class SubmissionImporter:
         for file in self.getSubmissionFiles(project):
             if self.shouldImport(file):
                 source, target = file.importIntoProject()
-                project.sourceTargetMapping.append( (source, target) )
+                project.sourceTargetMapping.append((source, target))
 
 
 def getSubmissionFilesOldestToNewest(project: Project) -> typing.Iterable['SubmissionFile']:

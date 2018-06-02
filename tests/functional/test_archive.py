@@ -5,7 +5,7 @@ import shutil
 from tests.functional import runners
 
 
-def test_pack_from_oldest_only(temp_path: pathlib.Path, archive_file: pathlib.Path) -> None:
+def test_archive(temp_path: pathlib.Path, archive_file: pathlib.Path) -> None:
     runners.run_kodiak_init(temp_path, archive_file, 'h4', duplicates='number-older')
 
     pelt = temp_path / 'h4' / 'submissions' / 'Pelt_Lucy' / 'LPelt_HW4.pdf'
