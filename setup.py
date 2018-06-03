@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name='Kodiak Tools',
-    version='1.0.2-dev',
+    version='1.0.2',
     license='GPLv3',
     long_description=long_description,
     packages=setuptools.find_packages('src'),
