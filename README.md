@@ -171,7 +171,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 ## 7. Versioning
 
-We use [RomVer](http://blog.legacyteam.info/2015/12/romver-romantic-versioning/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags).
+We use [SemVer 2.0](https://semver.org/) for versioning. The "public API" of this project is the command-line interface the application provides. For the versions available, see the [tags on this repository](https://github.com/your/project/tags).
 
 ## 8. Authors
 
