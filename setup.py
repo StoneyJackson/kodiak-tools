@@ -19,9 +19,6 @@ setuptools.setup(
     package_dir={
         '': 'src',
     },
-    install_requires=[
-        'click',
-    ],
     entry_points={
         'console_scripts': [
             'kodiak = kodiak.cli:main',

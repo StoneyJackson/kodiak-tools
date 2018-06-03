@@ -44,12 +44,12 @@ Requires Python 3.6 or higher to run.
 
 ## 3. Download and Install
 
-1. [Download latest stable release](https://github.com/StoneyJackson/kodiak-tools/releases).
+1. Download [latest release of kodiak.pyz](https://github.com/StoneyJackson/kodiak-tools/releases).
 
-2. Rename it to kodiak, or kodiak.pyz.
+2. Optionally rename it to kodiak.
 
     ```
-    mv kodiak-tools-[VERSION].pyz kodiak
+    mv kodiak.pyz kodiak
     ```
 
 3. Make sure it is executable.
