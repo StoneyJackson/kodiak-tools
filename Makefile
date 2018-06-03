@@ -61,5 +61,5 @@ release-message:
 	nvim .release/message.md
 
 
-release-post: release/message dist/kodiak.pyz
-	hub release create --asset dist/kodiak.pyz --file .release/message.md v$(VERSION)
+release-post:
+	hub release create -a dist/kodiak.pyz -f .release/message.md v$(VERSION)
